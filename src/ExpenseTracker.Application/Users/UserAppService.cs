@@ -18,6 +18,7 @@ using ExpenseTracker.Authorization;
 using ExpenseTracker.Authorization.Accounts;
 using ExpenseTracker.Authorization.Roles;
 using ExpenseTracker.Authorization.Users;
+using ExpenseTracker.Dto;
 using ExpenseTracker.Roles.Dto;
 using ExpenseTracker.Users.Dto;
 using Microsoft.AspNetCore.Identity;
@@ -99,6 +100,13 @@ namespace ExpenseTracker.Users
             var user = await _userManager.GetUserByIdAsync(input.Id);
             await _userManager.DeleteAsync(user);
         }
+
+        //public async Task<UserProfileDto> Profile(int id)
+        //{
+        //    var user = await _userManager.GetUserByIdAsync(id);
+        //    if(id == AbpSession.UserId || ) { }
+
+        //}
 
         [AbpAuthorize(PermissionNames.Pages_Users_Activation)]
         public async Task Activate(EntityDto<long> user)
