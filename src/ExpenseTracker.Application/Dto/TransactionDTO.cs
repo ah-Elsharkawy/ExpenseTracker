@@ -17,8 +17,6 @@ namespace ExpenseTracker.Dto
     [AutoMapFrom(typeof(Transaction))]
     public class TransactionDTO 
     {
-        [Required]
-        public int Id { get; set; }
 
         [Range(0, int.MaxValue, ErrorMessage = "Amount must be a positive number")]
         public double Amount { get; set; }
