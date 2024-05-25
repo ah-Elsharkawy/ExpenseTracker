@@ -14,6 +14,7 @@ using Abp.Linq.Extensions;
 using Abp.Localization;
 using Abp.Runtime.Session;
 using Abp.UI;
+using AutoMapper;
 using ExpenseTracker.Authorization;
 using ExpenseTracker.Authorization.Accounts;
 using ExpenseTracker.Authorization.Roles;
@@ -22,11 +23,12 @@ using ExpenseTracker.Dto;
 using ExpenseTracker.Roles.Dto;
 using ExpenseTracker.Users.Dto;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace ExpenseTracker.Users
 {
-    [AbpAuthorize(PermissionNames.Pages_Users)]
+    // [AbpAuthorize(PermissionNames.Pages_Users)]
     public class UserAppService : AsyncCrudAppService<User, UserDto, long, PagedUserResultRequestDto, CreateUserDto, UserDto>, IUserAppService
     {
         private readonly UserManager _userManager;
@@ -35,6 +37,7 @@ namespace ExpenseTracker.Users
         private readonly IPasswordHasher<User> _passwordHasher;
         private readonly IAbpSession _abpSession;
         private readonly LogInManager _logInManager;
+        private readonly IMapper _mapper;
 
         public UserAppService(
             IRepository<User, long> repository,
@@ -43,7 +46,8 @@ namespace ExpenseTracker.Users
             IRepository<Role> roleRepository,
             IPasswordHasher<User> passwordHasher,
             IAbpSession abpSession,
-            LogInManager logInManager)
+            LogInManager logInManager,
+            IMapper mapper)
             : base(repository)
         {
             _userManager = userManager;
@@ -52,6 +56,7 @@ namespace ExpenseTracker.Users
             _passwordHasher = passwordHasher;
             _abpSession = abpSession;
             _logInManager = logInManager;
+            _mapper = mapper;
         }
 
         public override async Task<UserDto> CreateAsync(CreateUserDto input)
@@ -101,12 +106,41 @@ namespace ExpenseTracker.Users
             await _userManager.DeleteAsync(user);
         }
 
-        //public async Task<UserProfileDto> Profile(int id)
-        //{
-        //    var user = await _userManager.GetUserByIdAsync(id);
-        //    if(id == AbpSession.UserId || ) { }
+        [HttpGet]
+        public async Task<UserProfileDto> Profile(int id)
+        {
+            var user = await _userManager.GetUserByIdAsync(id);
+            // i need toget the user roles here 
+            // var isAdmin = await _userManager.IsInRoleAsync(user, "Admin");
+            if (id == _abpSession.UserId)
+            {
+                return _mapper.Map<UserProfileDto>(user);
+            }
+            throw new AbpAuthorizationException("You are not authorized to view this profile.");
 
-        //}
+        }
+
+        public async Task UpdateProfile(UserProfileDto input)
+        {
+            if(input.Id == _abpSession.UserId)
+            {
+                var user = await _userManager.GetUserByIdAsync(input.Id);
+                user.Name = input.Name;
+
+                var emailExists = await _userManager.Users
+            .AnyAsync(u => u.EmailAddress == input.EmailAddress && u.Id != input.Id);
+                if (emailExists)
+                {
+                    throw new UserFriendlyException("Email alread exists");
+                }
+                user.EmailAddress = input.EmailAddress;
+                await _userManager.UpdateAsync(user);
+            }
+            else
+                throw new AbpAuthorizationException("You are not authorized to update this profile.");
+        }
+
+       
 
         [AbpAuthorize(PermissionNames.Pages_Users_Activation)]
         public async Task Activate(EntityDto<long> user)
