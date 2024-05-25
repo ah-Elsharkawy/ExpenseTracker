@@ -14,9 +14,6 @@ using System.Threading.Tasks;
 
 // ...
 
-
-
-
 namespace ExpenseTracker.Services
 {
     public class CategoryAppService : ApplicationService, ICategoryAppService
