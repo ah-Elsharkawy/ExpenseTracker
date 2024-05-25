@@ -1,4 +1,5 @@
-﻿using Abp.AutoMapper;
+﻿using Abp.Application.Services.Dto;
+using Abp.AutoMapper;
 using ExpenseTracker.Enums;
 using ExpenseTracker.Models;
 using System;
@@ -11,7 +12,7 @@ using System.Threading.Tasks;
 namespace ExpenseTracker.Dto
 {
     [AutoMapFrom(typeof(Recurrence))]
-    public class RecurrnceDTO
+    public class RecurrnceDTO : EntityDto<int>
     {
         [Required(AllowEmptyStrings =false, ErrorMessage = "Name is required")]
         public string Name { get; set; }
