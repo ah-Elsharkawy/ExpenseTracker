@@ -59,7 +59,7 @@ namespace ExpenseTracker.Services
         {
             try
             {
-                var updatedTransaction = _transactionRepository.Update(new Transaction { Amount = transaction.Amount, CategoryId = transaction.CategoryId, Type = transaction.Type, Date = transaction.Date, Description = transaction.Description });
+                var updatedTransaction = _transactionRepository.Update(new Transaction { Id = transaction.Id, Amount = transaction.Amount, CategoryId = transaction.CategoryId, Type = transaction.Type, Date = transaction.Date, Description = transaction.Description });
                 return _objectMapper.Map<TransactionDTO>(updatedTransaction);
             }
             catch (Exception ex)

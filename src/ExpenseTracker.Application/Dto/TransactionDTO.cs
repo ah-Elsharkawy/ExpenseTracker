@@ -15,7 +15,7 @@ using Abp.Application.Services.Dto;
 namespace ExpenseTracker.Dto
 {
     [AutoMapFrom(typeof(Transaction))]
-    public class TransactionDTO 
+    public class TransactionDTO : EntityDto<int>
     {
 
         [Range(0, int.MaxValue, ErrorMessage = "Amount must be a positive number")]
