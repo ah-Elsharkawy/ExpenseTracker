@@ -1,9 +1,11 @@
+using System;
 using System.Threading.Tasks;
 using Abp.Configuration;
 using Abp.Zero.Configuration;
+using Castle.Core.Smtp;
 using ExpenseTracker.Authorization.Accounts.Dto;
 using ExpenseTracker.Authorization.Users;
-
+using ExpenseTracker.Email;
 namespace ExpenseTracker.Authorization.Accounts
 {
     public class AccountAppService : ExpenseTrackerAppServiceBase, IAccountAppService
@@ -12,10 +14,13 @@ namespace ExpenseTracker.Authorization.Accounts
         public const string PasswordRegex = "(?=^.{8,}$)(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?!.*\\s)[0-9a-zA-Z!@#$%^&*()]*$";
 
         private readonly UserRegistrationManager _userRegistrationManager;
+        private readonly UserManager _userManager;
+        private readonly ExpenseTracker.Email.IEmailSender _emailSender;
 
-        public AccountAppService(
-            UserRegistrationManager userRegistrationManager)
+        public AccountAppService( UserRegistrationManager userRegistrationManager,UserManager userManager, ExpenseTracker.Email.IEmailSender emailSender)
         {
+            _userManager = userManager;
+            _emailSender = emailSender;
             _userRegistrationManager = userRegistrationManager;
         }
 
@@ -37,15 +42,30 @@ namespace ExpenseTracker.Authorization.Accounts
 
         public async Task<RegisterOutput> Register(RegisterInput input)
         {
+            // Register user
             var user = await _userRegistrationManager.RegisterAsync(
                 input.Name,
                 input.Surname,
                 input.EmailAddress,
                 input.UserName,
                 input.Password,
-                true // Assumed email address is always confirmed. Change this if you want to implement email confirmation.
+                false // Assumed email address is always confirmed. Change this if you want to implement email confirmation.
             );
 
+            // Save user to database
+            //await _userManager.CreateAsync(user);
+
+            // Generate email confirmation token
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+            // Manually construct the confirmation link
+            var confirmationLink = $"http://localhost:4200/api/v1/verification?email={user.EmailAddress}&token={Uri.EscapeDataString(token)}";
+
+            // Send email
+            var emailBody = $"Please confirm your email by clicking this link: <a href=\"{confirmationLink}\">Confirm Email</a>";
+            await _emailSender.SendEmailAsync(user.EmailAddress, "Confirm your email", emailBody);
+
+            // Check if email confirmation is required for login
             var isEmailConfirmationRequiredForLogin = await SettingManager.GetSettingValueAsync<bool>(AbpZeroSettingNames.UserManagement.IsEmailConfirmationRequiredForLogin);
 
             return new RegisterOutput
@@ -53,5 +73,7 @@ namespace ExpenseTracker.Authorization.Accounts
                 CanLogin = user.IsActive && (user.IsEmailConfirmed || !isEmailConfirmationRequiredForLogin)
             };
         }
+
+
     }
 }

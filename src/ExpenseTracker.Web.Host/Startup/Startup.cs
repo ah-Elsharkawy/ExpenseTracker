@@ -17,6 +17,7 @@ using Abp.AspNetCore.SignalR.Hubs;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using System.IO;
+using ExpenseTracker.Email;
 
 namespace ExpenseTracker.Web.Host.Startup
 {
@@ -28,11 +29,14 @@ namespace ExpenseTracker.Web.Host.Startup
 
         private readonly IConfigurationRoot _appConfiguration;
         private readonly IWebHostEnvironment _hostingEnvironment;
+        public IConfiguration Configuration { get; }
 
-        public Startup(IWebHostEnvironment env)
+        public Startup(IWebHostEnvironment env, IConfiguration configuration)
         {
             _hostingEnvironment = env;
             _appConfiguration = env.GetAppConfiguration();
+            Configuration = configuration;
+
         }
 
         public void ConfigureServices(IServiceCollection services)
@@ -119,6 +123,10 @@ namespace ExpenseTracker.Web.Host.Startup
 
         private void ConfigureSwagger(IServiceCollection services)
         {
+
+            services.Configure<SmtpOptions>(Configuration.GetSection("Smtp"));
+            services.AddTransient<IEmailSender, EmailSender>();
+
             services.AddSwaggerGen(options =>
             {
                 options.SwaggerDoc(_apiVersion, new OpenApiInfo
