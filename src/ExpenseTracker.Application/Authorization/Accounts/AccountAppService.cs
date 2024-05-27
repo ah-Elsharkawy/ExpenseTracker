@@ -42,16 +42,15 @@ namespace ExpenseTracker.Authorization.Accounts
 
         public async Task<RegisterOutput> Register(RegisterInput input)
         {
-            // Register user
+            var username = input.Email.Split('@')[0] + input.Email.Split('@')[1].Split(".")[0] + input.Email.Split('@')[1].Split(".")[1];
             var user = await _userRegistrationManager.RegisterAsync(
                 input.Name,
-                input.Surname,
-                input.EmailAddress,
-                input.UserName,
+                "",
+                input.Email,
+                username,
                 input.Password,
                 false // Assumed email address is always confirmed. Change this if you want to implement email confirmation.
             );
-
             // Save user to database
             //await _userManager.CreateAsync(user);
 

@@ -4,6 +4,7 @@ using ExpenseTracker.Enums;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -23,8 +24,10 @@ namespace ExpenseTracker.Models
         public int Duration { get; set; }
         //foreign keys
         public int CategoryId { get; set; }
-        public int UserId { get; set; }
+        [ForeignKey("User")]
+        public long UserId { get; set; }
         //nav properties
+
         public User User { get; set; }
         public Category Category { get; set; }
 
