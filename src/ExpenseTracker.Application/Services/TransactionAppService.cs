@@ -2,6 +2,7 @@
 using Abp.Domain.Repositories;
 using Abp.ObjectMapping;
 using ExpenseTracker.Dto;
+using ExpenseTracker.Enums;
 using ExpenseTracker.IServices;
 using ExpenseTracker.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -54,6 +55,11 @@ namespace ExpenseTracker.Services
                 throw new Exception(ex.Message);
             }
 
+        }
+        public List<TransactionDTO> GetTransactionByType(TransactionType type)
+        {
+            var transaction = _transactionRepository.GetAllList().Where(t => t.Type == type).ToList();
+            return _objectMapper.Map<List<TransactionDTO>>(transaction);
         }
         public List<TransactionDTO> GetTransactionsByUserId(int userId)
         {
