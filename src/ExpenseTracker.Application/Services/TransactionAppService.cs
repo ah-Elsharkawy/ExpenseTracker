@@ -27,16 +27,9 @@ namespace ExpenseTracker.Services
         }
         public TransactionDTO CreateTransaction(TransactionDTO input)
         {
-            try
-            {
-                //add new transaction
-                var transaction = _transactionRepository.Insert(new Transaction { UserId = input.UserId, Amount = input.Amount, CategoryId = input.CategoryId, Type = input.Type, Date = input.Date, Description = input.Description });
-                return _objectMapper.Map<TransactionDTO>(transaction);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+            //add new transaction
+            var transaction = _transactionRepository.Insert(new Transaction { UserId = input.UserId, Amount = input.Amount, CategoryId = input.CategoryId, Type = input.Type, Date = input.Date, Description = input.Description });
+            return _objectMapper.Map<TransactionDTO>(transaction);
         }
         public List<TransactionDTO> GetTransactions()
         {
