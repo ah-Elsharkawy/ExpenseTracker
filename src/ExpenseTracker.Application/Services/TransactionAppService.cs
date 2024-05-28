@@ -29,7 +29,7 @@ namespace ExpenseTracker.Services
             try
             {
                 //add new transaction
-                var transaction = _transactionRepository.Insert(new Transaction { Amount = input.Amount, CategoryId = input.CategoryId, Type = input.Type, Date = input.Date, Description = input.Description });
+                var transaction = _transactionRepository.Insert(new Transaction { UserId = input.UserId, Amount = input.Amount, CategoryId = input.CategoryId, Type = input.Type, Date = input.Date, Description = input.Description });
                 return _objectMapper.Map<TransactionDTO>(transaction);
             }
             catch (Exception ex)
@@ -55,11 +55,24 @@ namespace ExpenseTracker.Services
             }
 
         }
+        public List<TransactionDTO> GetTransactionsByUserId(int userId)
+        {
+            try
+            {
+                var transactions = _transactionRepository.GetAllList().Where(t => t.UserId == userId).ToList();
+                return _objectMapper.Map<List<TransactionDTO>>(transactions);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+            
+        }
         public TransactionDTO UpdateTransaction(TransactionDTO transaction)
         {
             try
             {
-                var updatedTransaction = _transactionRepository.Update(new Transaction { Id = transaction.Id, Amount = transaction.Amount, CategoryId = transaction.CategoryId, Type = transaction.Type, Date = transaction.Date, Description = transaction.Description });
+                var updatedTransaction = _transactionRepository.Update(new Transaction { UserId = transaction.UserId,  Id = transaction.Id, Amount = transaction.Amount, CategoryId = transaction.CategoryId, Type = transaction.Type, Date = transaction.Date, Description = transaction.Description });
                 return _objectMapper.Map<TransactionDTO>(updatedTransaction);
             }
             catch (Exception ex)
