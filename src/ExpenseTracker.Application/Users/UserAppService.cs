@@ -134,6 +134,7 @@ namespace ExpenseTracker.Users
                     throw new UserFriendlyException("Email alread exists");
                 }
                 user.EmailAddress = input.EmailAddress;
+                user.UserName = input.EmailAddress.Split('@')[0] + input.EmailAddress.Split('@')[1].Split(".")[0] + input.EmailAddress.Split('@')[1].Split(".")[1];
                 await _userManager.UpdateAsync(user);
             }
             else
