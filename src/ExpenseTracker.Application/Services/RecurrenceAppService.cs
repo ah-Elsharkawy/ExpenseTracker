@@ -2,6 +2,7 @@
 using Abp.Domain.Repositories;
 using Abp.ObjectMapping;
 using ExpenseTracker.Dto;
+using ExpenseTracker.Enums;
 using ExpenseTracker.IServices;
 using ExpenseTracker.Models;
 using System;
@@ -78,6 +79,18 @@ namespace ExpenseTracker.Services
                 throw new Exception(ex.Message);
             }
 
+        }
+        public List<RecurrnceDTO> GetRecurrenceByType(TransactionType type)
+        {
+            try
+            {
+                var Recurrences = this.Repository.GetAllList().Where(x => x.Type == type).ToList();
+                return objectMapper.Map<List<RecurrnceDTO>>(Recurrences);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
 
         public RecurrnceDTO GetRecurrnceDetails(int id)

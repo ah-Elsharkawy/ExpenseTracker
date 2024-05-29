@@ -18,6 +18,9 @@ namespace ExpenseTracker.Dto
     public class TransactionDTO : EntityDto<int>
     {
 
+        [Required(ErrorMessage = "UserId is required")]
+        public int UserId { get; set; }
+
         [Range(0, int.MaxValue, ErrorMessage = "Amount must be a positive number")]
         public double Amount { get; set; }
 
