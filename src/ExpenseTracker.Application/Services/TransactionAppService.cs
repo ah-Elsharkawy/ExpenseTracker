@@ -66,13 +66,13 @@ namespace ExpenseTracker.Services
             {
                 throw new Exception(ex.Message);
             }
-            
+
         }
         public TransactionDTO UpdateTransaction(TransactionDTO transaction)
         {
             try
             {
-                var updatedTransaction = _transactionRepository.Update(new Transaction { UserId = transaction.UserId,  Id = transaction.Id, Amount = transaction.Amount, CategoryId = transaction.CategoryId, Type = transaction.Type, Date = transaction.Date, Description = transaction.Description });
+                var updatedTransaction = _transactionRepository.Update(new Transaction { UserId = transaction.UserId, Id = transaction.Id, Amount = transaction.Amount, CategoryId = transaction.CategoryId, Type = transaction.Type, Date = transaction.Date, Description = transaction.Description });
                 return _objectMapper.Map<TransactionDTO>(updatedTransaction);
             }
             catch (Exception ex)
@@ -110,11 +110,21 @@ namespace ExpenseTracker.Services
             return _objectMapper.Map<List<TransactionDTO>>(transaction);
         }
 
-        public List<TransactionDTO> GetTransactionByDate(int id, DateTime startDate, DateTime endDate)
+        public List<TransactionDTO> GetTransactionByDate(int id, DateTime startDate, DateTime endDate, TransactionType? type)
         {
-            //var user = AbpSession.UserId;
-            var transaction = _transactionRepository.GetAllList().Where(u => u.UserId == id && u.Date >= startDate && u.Date <= endDate).OrderBy(t => t.Date).ToList();
+            List<Transaction> transaction;
+            if (type.HasValue)
+            {
+
+                transaction = _transactionRepository.GetAllList().Where(u => u.UserId == id && u.Date >= startDate && u.Date <= endDate && u.Type == type).OrderBy(t => t.Date).ToList();
+            }
+            else
+            {
+                transaction = _transactionRepository.GetAllList().Where(u => u.UserId == id && u.Date >= startDate && u.Date <= endDate).OrderBy(t => t.Date).ToList();
+            }
+
             return _objectMapper.Map<List<TransactionDTO>>(transaction);
+            //var user = AbpSession.UserId;
         }
     }
 }
