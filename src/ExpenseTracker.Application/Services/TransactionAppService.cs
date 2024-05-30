@@ -6,6 +6,7 @@ using ExpenseTracker.Enums;
 using ExpenseTracker.IServices;
 using ExpenseTracker.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -90,6 +91,22 @@ namespace ExpenseTracker.Services
             {
                 throw new Exception(ex.Message);
             }
+        }
+
+        public List<TransactionDTO> GetTransactionsOneWeekAgo(int id)
+        {
+            DateTime today = DateTime.Now;
+            DateTime oneWeekBefore = today.AddDays(-7);
+            //var user = AbpSession.UserId;
+            var transaction = _transactionRepository.GetAllList().Where(u=> u.UserId == id && u.Date >= oneWeekBefore  && u.Date <= today).OrderBy(t => t.Date).ToList();
+            return _objectMapper.Map<List<TransactionDTO>>(transaction);
+        }
+
+        public List<TransactionDTO> GetTransactionByDate(int id, DateTime startDate, DateTime endDate)
+        {
+            //var user = AbpSession.UserId;
+            var transaction = _transactionRepository.GetAllList().Where(u => u.UserId == id && u.Date >= startDate && u.Date <= endDate).OrderBy(t => t.Date).ToList();
+            return _objectMapper.Map<List<TransactionDTO>>(transaction);
         }
     }
 }

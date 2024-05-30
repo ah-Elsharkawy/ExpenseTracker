@@ -1,5 +1,6 @@
 ﻿using Abp.Application.Services;
 using ExpenseTracker.Dto;
+using ExpenseTracker.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,5 +18,10 @@ namespace ExpenseTracker.IServices
         TransactionDTO GetTransactionById(int id);
         TransactionDTO UpdateTransaction(TransactionDTO transaction);
         void DeleteTransaction(int id);
+        List<TransactionDTO> GetTransactionByType(TransactionType type);
+        List<TransactionDTO> GetTransactionsByUserId(int userId);
+
+        List<TransactionDTO> GetTransactionsOneWeekAgo(int id);
+        List<TransactionDTO> GetTransactionByDate(int id, DateTime startDate, DateTime endDate);
     }
 }
