@@ -112,15 +112,18 @@ namespace ExpenseTracker.Services
 
         public List<TransactionDTO> GetTransactionByDate(int id, DateTime startDate, DateTime endDate, TransactionType? type)
         {
+            DateTime startDateOnly = startDate.Date;
+            DateTime endDateOnly = endDate.Date.AddDays(1).AddMilliseconds(-1);
+
             List<Transaction> transaction;
             if (type.HasValue)
             {
 
-                transaction = _transactionRepository.GetAllList().Where(u => u.UserId == id && u.Date >= startDate && u.Date <= endDate && u.Type == type).OrderBy(t => t.Date).ToList();
+                transaction = _transactionRepository.GetAllList().Where(u => u.UserId == id && u.Date >= startDateOnly && u.Date <= endDateOnly && u.Type == type).OrderBy(t => t.Date).ToList();
             }
             else
             {
-                transaction = _transactionRepository.GetAllList().Where(u => u.UserId == id && u.Date >= startDate && u.Date <= endDate).OrderBy(t => t.Date).ToList();
+                transaction = _transactionRepository.GetAllList().Where(u => u.UserId == id && u.Date >= startDateOnly && u.Date <= endDateOnly).OrderBy(t => t.Date).ToList();
             }
 
             return _objectMapper.Map<List<TransactionDTO>>(transaction);
