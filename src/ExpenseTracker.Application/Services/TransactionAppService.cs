@@ -93,12 +93,20 @@ namespace ExpenseTracker.Services
             }
         }
 
-        public List<TransactionDTO> GetTransactionsOneWeekAgo(int id)
+        public List<TransactionDTO> GetTransactionsOneWeekAgo(int id, TransactionType? type)
         {
             DateTime today = DateTime.Now;
             DateTime oneWeekBefore = today.AddDays(-7);
             //var user = AbpSession.UserId;
-            var transaction = _transactionRepository.GetAllList().Where(u=> u.UserId == id && u.Date >= oneWeekBefore  && u.Date <= today).OrderBy(t => t.Date).ToList();
+            List<Transaction> transaction;
+            if (type.HasValue)
+            {
+                transaction = _transactionRepository.GetAllList().Where(u => u.UserId == id && u.Date >= oneWeekBefore && u.Date <= today && u.Type == type).OrderBy(t => t.Date).ToList();
+            }
+            else
+            {
+                transaction = _transactionRepository.GetAllList().Where(u => u.UserId == id && u.Date >= oneWeekBefore && u.Date <= today).OrderBy(t => t.Date).ToList();
+            }
             return _objectMapper.Map<List<TransactionDTO>>(transaction);
         }
 

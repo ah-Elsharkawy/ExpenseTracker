@@ -21,7 +21,7 @@ namespace ExpenseTracker.IServices
         List<TransactionDTO> GetTransactionByType(TransactionType type);
         List<TransactionDTO> GetTransactionsByUserId(int userId);
 
-        List<TransactionDTO> GetTransactionsOneWeekAgo(int id);
+        List<TransactionDTO> GetTransactionsOneWeekAgo(int id, TransactionType? type);
         List<TransactionDTO> GetTransactionByDate(int id, DateTime startDate, DateTime endDate);
     }
 }
