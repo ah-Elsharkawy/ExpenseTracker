@@ -1,6 +1,7 @@
 ﻿using Abp.Application.Services;
 using Abp.Domain.Repositories;
 using Abp.ObjectMapping;
+using Abp.Runtime.Session;
 using ExpenseTracker.Dto;
 using ExpenseTracker.Enums;
 using ExpenseTracker.IServices;
@@ -18,12 +19,14 @@ namespace ExpenseTracker.Services
     {
         private readonly IRepository<Transaction> _transactionRepository;
         private readonly IObjectMapper _objectMapper;
+        public IAbpSession AbpSession { get; set; }
 
 
         public TransactionAppService(IRepository<Transaction> transactionRepository, IObjectMapper objectMapper)
         {
             _transactionRepository = transactionRepository;
             _objectMapper = objectMapper;
+            AbpSession = NullAbpSession.Instance;
         }
         public TransactionDTO CreateTransaction(TransactionDTO input)
         {
@@ -51,7 +54,8 @@ namespace ExpenseTracker.Services
         }
         public List<TransactionDTO> GetTransactionByType(TransactionType type)
         {
-            var transaction = _transactionRepository.GetAllList().Where(t => t.Type == type).ToList();
+            var userId = AbpSession.UserId;
+            var transaction = _transactionRepository.GetAllList().Where(t => t.Type == type && t.UserId == userId).ToList();
             return _objectMapper.Map<List<TransactionDTO>>(transaction);
         }
         public List<TransactionDTO> GetTransactionsByUserId(int userId)
