@@ -42,8 +42,10 @@ namespace ExpenseTracker.Services
         }
         public List<TransactionDTO> GetTransactions()
         {
-            
-            var transactions = _transactionRepository.GetAllList().Where(t => t.UserId == 16).ToList();
+            var uId = AbpSession.UserId;
+            if(uId == null)
+                return null;
+            var transactions = _transactionRepository.GetAllList().Where(t => t.UserId == uId).ToList();
             return _objectMapper.Map<List<TransactionDTO>>(transactions);
         }
         public TransactionDTO GetTransactionById(int id)
