@@ -4,6 +4,7 @@ using ExpenseTracker.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace ExpenseTracker.Migrations
 {
     [DbContext(typeof(ExpenseTrackerDbContext))]
-    partial class ExpenseTrackerDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240520212132_adding-custom-models")]
+    partial class addingcustommodels
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1659,14 +1662,17 @@ namespace ExpenseTracker.Migrations
                     b.Property<int>("Type")
                         .HasColumnType("int");
 
-                    b.Property<long>("UserId")
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<long?>("UserId1")
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CategoryId");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("UserId1");
 
                     b.ToTable("Recurrences");
                 });
@@ -2040,9 +2046,7 @@ namespace ExpenseTracker.Migrations
 
                     b.HasOne("ExpenseTracker.Authorization.Users.User", "User")
                         .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("UserId1");
 
                     b.Navigation("Category");
 
