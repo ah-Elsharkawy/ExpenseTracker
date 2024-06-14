@@ -31,7 +31,7 @@ namespace ExpenseTracker.Services
         {
             try
             {
-                var category =  _repository.Insert(new Category { Name = input.Name, Type = input.Type });  
+                var category =  _repository.Insert(new Category { Name = input.Name, Type = input.Type, Icon = (input.Icon!=null ? input.Icon : "more_horiz") });  
                 return _objectMapper.Map<CategoryDto>(category);
             }
             catch (Exception ex)
@@ -82,7 +82,7 @@ namespace ExpenseTracker.Services
         {
             try
             {
-               var c = _repository.Update(new Category() { Id = category.Id, Name = category.Name, Type = category.Type });
+               var c = _repository.Update(new Category() { Id = category.Id, Name = category.Name, Type = category.Type, Icon = (category.Icon != null ? category.Icon : "more_horiz") });
                return _objectMapper.Map<CategoryDto>(c);
             }
             catch(Exception ex)
