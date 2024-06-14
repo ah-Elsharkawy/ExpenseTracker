@@ -2,6 +2,7 @@
 using Abp.Domain.Repositories;
 using Abp.ObjectMapping;
 using Abp.Runtime.Session;
+using ExpenseTracker.Authorization.Users;
 using ExpenseTracker.Dto;
 using ExpenseTracker.Enums;
 using ExpenseTracker.IServices;
@@ -32,20 +33,29 @@ namespace ExpenseTracker.Services
         public TransactionDTO CreateTransaction(TransactionDTO input)
         {
             //add new transaction
-            var transaction = _transactionRepository.Insert(new Transaction { UserId = input.UserId, Amount = input.Amount, CategoryId = input.CategoryId, Type = input.Type, Date = input.Date, Description = input.Description });
+            var uId = AbpSession.UserId;
+            if(uId == null)
+                return null;
+            var transaction = _transactionRepository.Insert(new Transaction { UserId =(int)uId, Amount = input.Amount, CategoryId = input.CategoryId, Type = input.Type, Date = input.Date, Description = input.Description });
+            Console.WriteLine(uId);
             return _objectMapper.Map<TransactionDTO>(transaction);
         }
         public List<TransactionDTO> GetTransactions()
         {
-            var transactions = _transactionRepository.GetAllList().ToList();
+            
+            var transactions = _transactionRepository.GetAllList().Where(t => t.UserId == 16).ToList();
             return _objectMapper.Map<List<TransactionDTO>>(transactions);
         }
         public TransactionDTO GetTransactionById(int id)
         {
             try
             {
+                var uId = AbpSession.UserId;
                 var transaction = _transactionRepository.Get(id);
-                return _objectMapper.Map<TransactionDTO>(transaction);
+                if(transaction.UserId == uId)
+                    return _objectMapper.Map<TransactionDTO>(transaction);
+                else
+                    return null;
             }
             catch (Exception ex)
             {
@@ -55,8 +65,11 @@ namespace ExpenseTracker.Services
         }
         public List<TransactionDTO> GetTransactionByType(TransactionType type)
         {
-            var userId = AbpSession.UserId;
-            var transaction = _transactionRepository.GetAllList().Where(t => t.Type == type && t.UserId == userId).ToList();
+            var uId = AbpSession.UserId;
+            if (uId == null)
+                return null;
+            
+            var transaction = _transactionRepository.GetAllList().Where(t => t.Type == type && t.UserId == uId).ToList();
             return _objectMapper.Map<List<TransactionDTO>>(transaction);
         }
         public List<TransactionDTO> GetTransactionsByUserId(int userId)
@@ -76,7 +89,16 @@ namespace ExpenseTracker.Services
         {
             try
             {
-                var updatedTransaction = _transactionRepository.Update(new Transaction { UserId = transaction.UserId, Id = transaction.Id, Amount = transaction.Amount, CategoryId = transaction.CategoryId, Type = transaction.Type, Date = transaction.Date, Description = transaction.Description });
+                Transaction t = null;
+                if(transaction != null)
+                {
+                     t = _transactionRepository.Get(transaction.Id);
+                }
+
+                var uId = AbpSession.UserId;
+
+                if (uId == null || t?.UserId != uId) return null;
+                var updatedTransaction = _transactionRepository.Update(new Transaction { UserId = (int)uId , Id = transaction.Id, Amount = transaction.Amount, CategoryId = transaction.CategoryId, Type = transaction.Type, Date = transaction.Date, Description = transaction.Description });
                 return _objectMapper.Map<TransactionDTO>(updatedTransaction);
             }
             catch (Exception ex)
