@@ -58,7 +58,7 @@ namespace ExpenseTracker.Authorization.Accounts
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
             // Manually construct the confirmation link
-            var confirmationLink = $"http://localhost:4200/api/v1/verification?email={user.EmailAddress}&token={Uri.EscapeDataString(token)}";
+            var confirmationLink = $"http://localhost:4200/verifyEmail?email={user.EmailAddress}&token={Uri.EscapeDataString(token)}";
 
             // Send email
             var emailBody = $"Please confirm your email by clicking this link: <a href=\"{confirmationLink}\">Confirm Email</a>";
