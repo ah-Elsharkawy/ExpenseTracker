@@ -57,6 +57,7 @@ namespace ExpenseTracker.Web.Host.Startup
                 options => options.AddPolicy(
                     _defaultCorsPolicyName,
                     builder => builder
+                    .AllowAnyOrigin()
                         .WithOrigins(
                             // App:CorsOrigins in appsettings.json can contain more than one address separated by comma.
                             _appConfiguration["App:CorsOrigins"]
@@ -64,6 +65,7 @@ namespace ExpenseTracker.Web.Host.Startup
                                 .Select(o => o.RemovePostFix("/"))
                                 .ToArray()
                         )
+                        
                         .AllowAnyHeader()
                         .AllowAnyMethod()
                         .AllowCredentials()

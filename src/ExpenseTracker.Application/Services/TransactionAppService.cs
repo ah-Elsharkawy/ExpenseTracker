@@ -1,10 +1,14 @@
 ﻿using Abp.Application.Services;
 using Abp.Domain.Repositories;
 using Abp.ObjectMapping;
+using Abp.Runtime.Session;
+using ExpenseTracker.Authorization.Users;
 using ExpenseTracker.Dto;
+using ExpenseTracker.Enums;
 using ExpenseTracker.IServices;
 using ExpenseTracker.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,37 +21,65 @@ namespace ExpenseTracker.Services
     {
         private readonly IRepository<Transaction> _transactionRepository;
         private readonly IObjectMapper _objectMapper;
+        public IAbpSession AbpSession { get; set; }
 
 
         public TransactionAppService(IRepository<Transaction> transactionRepository, IObjectMapper objectMapper)
         {
             _transactionRepository = transactionRepository;
             _objectMapper = objectMapper;
+            AbpSession = NullAbpSession.Instance;
         }
         public TransactionDTO CreateTransaction(TransactionDTO input)
         {
-            try
-            {
-                //add new transaction
-                var transaction = _transactionRepository.Insert(new Transaction { Amount = input.Amount, CategoryId = input.CategoryId, Type = input.Type, Date = input.Date, Description = input.Description });
-                return _objectMapper.Map<TransactionDTO>(transaction);
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
+            //add new transaction
+            var uId = AbpSession.UserId;
+            if(uId == null)
+                return null;
+            var transaction = _transactionRepository.Insert(new Transaction { UserId =(int)uId, Amount = input.Amount, CategoryId = input.CategoryId, Type = input.Type, Date = input.Date, Description = input.Description });
+            Console.WriteLine(uId);
+            return _objectMapper.Map<TransactionDTO>(transaction);
         }
         public List<TransactionDTO> GetTransactions()
         {
-            var transactions = _transactionRepository.GetAllList().ToList();
+            var uId = AbpSession.UserId;
+            if(uId == null)
+                return null;
+            var transactions = _transactionRepository.GetAllList().Where(t => t.UserId == uId).ToList();
             return _objectMapper.Map<List<TransactionDTO>>(transactions);
         }
         public TransactionDTO GetTransactionById(int id)
         {
             try
             {
+                var uId = AbpSession.UserId;
                 var transaction = _transactionRepository.Get(id);
-                return _objectMapper.Map<TransactionDTO>(transaction);
+                if(transaction.UserId == uId)
+                    return _objectMapper.Map<TransactionDTO>(transaction);
+                else
+                    return null;
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+
+        }
+        public List<TransactionDTO> GetTransactionByType(TransactionType type, int userId)
+        {
+            var uId = AbpSession.UserId;
+            if (uId == null || userId == null)
+                return null;
+            
+            var transaction = _transactionRepository.GetAllList().Where(t => t.Type == type && t.UserId == userId).ToList();
+            return _objectMapper.Map<List<TransactionDTO>>(transaction);
+        }
+        public List<TransactionDTO> GetTransactionsByUserId(int userId)
+        {
+            try
+            {
+                var transactions = _transactionRepository.GetAllList().Where(t => t.UserId == userId).ToList();
+                return _objectMapper.Map<List<TransactionDTO>>(transactions);
             }
             catch (Exception ex)
             {
@@ -59,7 +91,16 @@ namespace ExpenseTracker.Services
         {
             try
             {
-                var updatedTransaction = _transactionRepository.Update(new Transaction { Id = transaction.Id, Amount = transaction.Amount, CategoryId = transaction.CategoryId, Type = transaction.Type, Date = transaction.Date, Description = transaction.Description });
+                Transaction t = null;
+                if(transaction != null)
+                {
+                     t = _transactionRepository.Get(transaction.Id);
+                }
+
+                var uId = AbpSession.UserId;
+
+                if (uId == null || t?.UserId != uId) return null;
+                var updatedTransaction = _transactionRepository.Update(new Transaction { UserId = (int)uId , Id = transaction.Id, Amount = transaction.Amount, CategoryId = transaction.CategoryId, Type = transaction.Type, Date = transaction.Date, Description = transaction.Description });
                 return _objectMapper.Map<TransactionDTO>(updatedTransaction);
             }
             catch (Exception ex)
@@ -78,6 +119,43 @@ namespace ExpenseTracker.Services
             {
                 throw new Exception(ex.Message);
             }
+        }
+
+        public List<TransactionDTO> GetTransactionsOneWeekAgo(int id, TransactionType? type)
+        {
+            DateTime today = DateTime.Now;
+            DateTime oneWeekBefore = today.AddDays(-7);
+            //var user = AbpSession.UserId;
+            List<Transaction> transaction;
+            if (type.HasValue)
+            {
+                transaction = _transactionRepository.GetAllList().Where(u => u.UserId == id && u.Date >= oneWeekBefore && u.Date <= today && u.Type == type).OrderBy(t => t.Date).ToList();
+            }
+            else
+            {
+                transaction = _transactionRepository.GetAllList().Where(u => u.UserId == id && u.Date >= oneWeekBefore && u.Date <= today).OrderBy(t => t.Date).ToList();
+            }
+            return _objectMapper.Map<List<TransactionDTO>>(transaction);
+        }
+
+        public List<TransactionDTO> GetTransactionByDate(int id, DateTime startDate, DateTime endDate, TransactionType? type)
+        {
+            DateTime startDateOnly = startDate.Date;
+            DateTime endDateOnly = endDate.Date.AddDays(1).AddMilliseconds(-1);
+
+            List<Transaction> transaction;
+            if (type.HasValue)
+            {
+
+                transaction = _transactionRepository.GetAllList().Where(u => u.UserId == id && u.Date >= startDateOnly && u.Date <= endDateOnly && u.Type == type).OrderBy(t => t.Date).ToList();
+            }
+            else
+            {
+                transaction = _transactionRepository.GetAllList().Where(u => u.UserId == id && u.Date >= startDateOnly && u.Date <= endDateOnly).OrderBy(t => t.Date).ToList();
+            }
+
+            return _objectMapper.Map<List<TransactionDTO>>(transaction);
+            //var user = AbpSession.UserId;
         }
     }
 }

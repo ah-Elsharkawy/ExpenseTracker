@@ -18,6 +18,8 @@ namespace ExpenseTracker.Dto
         [Required, MinLength(3), MaxLength(20, ErrorMessage = "Category name must be from 3 to 20 chars long")]
         public string Name { get; set; }
 
+        public string Icon { get; set; }
+
         [Required]
         [Range(0, 1, ErrorMessage = "Transaction type must be between 0 and 1")]
         public TransactionType Type { get; set; }

@@ -12,6 +12,7 @@ using Abp.Extensions;
 using Abp.IdentityFramework;
 using Abp.Linq.Extensions;
 using Abp.Localization;
+using Abp.ObjectMapping;
 using Abp.Runtime.Session;
 using Abp.UI;
 using AutoMapper;
@@ -20,6 +21,7 @@ using ExpenseTracker.Authorization.Accounts;
 using ExpenseTracker.Authorization.Roles;
 using ExpenseTracker.Authorization.Users;
 using ExpenseTracker.Dto;
+using ExpenseTracker.Models;
 using ExpenseTracker.Roles.Dto;
 using ExpenseTracker.Users.Dto;
 using Microsoft.AspNetCore.Identity;
@@ -31,6 +33,7 @@ namespace ExpenseTracker.Users
     // [AbpAuthorize(PermissionNames.Pages_Users)]
     public class UserAppService : AsyncCrudAppService<User, UserDto, long, PagedUserResultRequestDto, CreateUserDto, UserDto>, IUserAppService
     {
+        private readonly IRepository<User, long> _repository;
         private readonly UserManager _userManager;
         private readonly RoleManager _roleManager;
         private readonly IRepository<Role> _roleRepository;
@@ -38,6 +41,7 @@ namespace ExpenseTracker.Users
         private readonly IAbpSession _abpSession;
         private readonly LogInManager _logInManager;
         private readonly IMapper _mapper;
+        private readonly IObjectMapper _objectMapper;
 
         public UserAppService(
             IRepository<User, long> repository,
@@ -47,9 +51,11 @@ namespace ExpenseTracker.Users
             IPasswordHasher<User> passwordHasher,
             IAbpSession abpSession,
             LogInManager logInManager,
-            IMapper mapper)
+            IMapper mapper,
+            IObjectMapper objectMapper)
             : base(repository)
         {
+            _repository = repository;
             _userManager = userManager;
             _roleManager = roleManager;
             _roleRepository = roleRepository;
@@ -57,6 +63,7 @@ namespace ExpenseTracker.Users
             _abpSession = abpSession;
             _logInManager = logInManager;
             _mapper = mapper;
+            _objectMapper = objectMapper;
         }
 
         public override async Task<UserDto> CreateAsync(CreateUserDto input)
@@ -134,6 +141,7 @@ namespace ExpenseTracker.Users
                     throw new UserFriendlyException("Email alread exists");
                 }
                 user.EmailAddress = input.EmailAddress;
+                user.UserName = input.EmailAddress.Split('@')[0] + input.EmailAddress.Split('@')[1].Split(".")[0] + input.EmailAddress.Split('@')[1].Split(".")[1];
                 await _userManager.UpdateAsync(user);
             }
             else
@@ -287,6 +295,19 @@ namespace ExpenseTracker.Users
             }
 
             return true;
+        }
+
+        public UserBalanceDTO GetBalance(int id)
+        {
+            try
+            {
+                var c = _repository.Get(id);
+                return _objectMapper.Map<UserBalanceDTO>(c);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
     }
 }

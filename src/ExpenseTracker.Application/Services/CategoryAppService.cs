@@ -2,6 +2,7 @@
 using Abp.Domain.Repositories;
 using Abp.ObjectMapping;
 using ExpenseTracker.Dto;
+using ExpenseTracker.Enums;
 using ExpenseTracker.IServices;
 using ExpenseTracker.Models;
 using Microsoft.AspNetCore.Diagnostics;
@@ -31,7 +32,7 @@ namespace ExpenseTracker.Services
         {
             try
             {
-                var category =  _repository.Insert(new Category { Name = input.Name, Type = input.Type });  
+                var category =  _repository.Insert(new Category { Name = input.Name, Type = input.Type, Icon = (input.Icon!=null ? input.Icon : "more_horiz") });  
                 return _objectMapper.Map<CategoryDto>(category);
             }
             catch (Exception ex)
@@ -52,11 +53,11 @@ namespace ExpenseTracker.Services
             }
         }
 
-        public List<CategoryDto> GetCategories()
+        public List<CategoryDto> GetCategoriesByType(TransactionType type)
         {
             try
             {
-                var categories = _repository.GetAll().ToList();
+                var categories = _repository.GetAll().Where(c => c.Type == type).ToList();
                 return _objectMapper.Map<List<CategoryDto>>(categories);
             }
             catch (Exception ex)
@@ -82,7 +83,7 @@ namespace ExpenseTracker.Services
         {
             try
             {
-               var c = _repository.Update(new Category() { Id = category.Id, Name = category.Name, Type = category.Type });
+               var c = _repository.Update(new Category() { Id = category.Id, Name = category.Name, Type = category.Type, Icon = (category.Icon != null ? category.Icon : "more_horiz") });
                return _objectMapper.Map<CategoryDto>(c);
             }
             catch(Exception ex)
@@ -91,5 +92,18 @@ namespace ExpenseTracker.Services
             }
         }
 
+        public string GetCategoryNameById(int id)
+        {
+            try
+            {
+                var c = _repository.Get(id);
+                return c.Name;
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
     }
 }

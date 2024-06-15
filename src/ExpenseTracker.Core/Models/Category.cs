@@ -17,6 +17,7 @@ namespace ExpenseTracker.Models
         [Required]
         [Range(0, 1, ErrorMessage = "Transaction type must be between 0 and 1")]
         public TransactionType Type { get; set; }
+        public string Icon { get; set; } = "more_horiz";
         //nav properties
         public List<Transaction> Transactions { get; set; }
         public List<Recurrence> Recurrences { get; set; }

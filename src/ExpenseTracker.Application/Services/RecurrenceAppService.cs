@@ -2,6 +2,7 @@
 using Abp.Domain.Repositories;
 using Abp.ObjectMapping;
 using ExpenseTracker.Dto;
+using ExpenseTracker.Enums;
 using ExpenseTracker.IServices;
 using ExpenseTracker.Models;
 using System;
@@ -25,17 +26,20 @@ namespace ExpenseTracker.Services
 
         public RecurrnceDTO CreateRecurrence(RecurrnceDTO input)
         {
+            var uId = AbpSession.UserId;
+            if (uId == null)
+                return null;
             try
             {
                 var recurrence = this.Repository.Insert(new Recurrence
                 {
-                    Name = input.Name,
+                    Description = input.Description,
                     Date = input.Date,
                     Amount = input.Amount,
                     Type = input.Type,
                     Duration = input.Duration,
                     CategoryId = input.CategoryId,
-                    UserId = input.UserId,
+                    UserId = (int)uId,
 
                 });
                 return objectMapper.Map<RecurrnceDTO>(recurrence);
@@ -79,6 +83,18 @@ namespace ExpenseTracker.Services
             }
 
         }
+        public List<RecurrnceDTO> GetRecurrenceByType(TransactionType type)
+        {
+            try
+            {
+                var Recurrences = this.Repository.GetAllList().Where(x => x.Type == type).ToList();
+                return objectMapper.Map<List<RecurrnceDTO>>(Recurrences);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
 
         public RecurrnceDTO GetRecurrnceDetails(int id)
         {
@@ -111,13 +127,13 @@ namespace ExpenseTracker.Services
                         new Recurrence()
                         {
                             Id = id,
-                            Name = input.Name,
+                            Description = input.Description,
                             Date = input.Date,
                             Amount = input.Amount,
                             Type = input.Type,
                             Duration = input.Duration,
                             CategoryId = input.CategoryId,
-                            UserId = input.UserId,
+                            //UserId = input.UserId,
                             
                         });
                 
