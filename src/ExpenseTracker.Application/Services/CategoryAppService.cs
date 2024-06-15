@@ -91,5 +91,19 @@ namespace ExpenseTracker.Services
             }
         }
 
+        public string GetCategoryNameById(int id)
+        {
+            try
+            {
+                var c = _repository.Get(id);
+                return c.Name;
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
     }
 }
