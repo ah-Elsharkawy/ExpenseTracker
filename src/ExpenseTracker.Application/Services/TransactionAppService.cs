@@ -65,13 +65,13 @@ namespace ExpenseTracker.Services
             }
 
         }
-        public List<TransactionDTO> GetTransactionByType(TransactionType type)
+        public List<TransactionDTO> GetTransactionByType(TransactionType type, int userId)
         {
             var uId = AbpSession.UserId;
-            if (uId == null)
+            if (uId == null || userId == null)
                 return null;
             
-            var transaction = _transactionRepository.GetAllList().Where(t => t.Type == type && t.UserId == uId).ToList();
+            var transaction = _transactionRepository.GetAllList().Where(t => t.Type == type && t.UserId == userId).ToList();
             return _objectMapper.Map<List<TransactionDTO>>(transaction);
         }
         public List<TransactionDTO> GetTransactionsByUserId(int userId)

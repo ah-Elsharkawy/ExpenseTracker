@@ -18,7 +18,7 @@ namespace ExpenseTracker.IServices
         TransactionDTO GetTransactionById(int id);
         TransactionDTO UpdateTransaction(TransactionDTO transaction);
         void DeleteTransaction(int id);
-        List<TransactionDTO> GetTransactionByType(TransactionType type);
+        List<TransactionDTO> GetTransactionByType(TransactionType type, int userId);
         List<TransactionDTO> GetTransactionsByUserId(int userId);
 
         List<TransactionDTO> GetTransactionsOneWeekAgo(int id, TransactionType? type);
