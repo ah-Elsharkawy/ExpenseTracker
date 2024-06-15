@@ -2,6 +2,7 @@
 using Abp.Domain.Repositories;
 using Abp.ObjectMapping;
 using ExpenseTracker.Dto;
+using ExpenseTracker.Enums;
 using ExpenseTracker.IServices;
 using ExpenseTracker.Models;
 using Microsoft.AspNetCore.Diagnostics;
@@ -52,11 +53,11 @@ namespace ExpenseTracker.Services
             }
         }
 
-        public List<CategoryDto> GetCategories()
+        public List<CategoryDto> GetCategoriesByType(TransactionType type)
         {
             try
             {
-                var categories = _repository.GetAll().ToList();
+                var categories = _repository.GetAll().Where(c => c.Type == type).ToList();
                 return _objectMapper.Map<List<CategoryDto>>(categories);
             }
             catch (Exception ex)
@@ -104,6 +105,5 @@ namespace ExpenseTracker.Services
                 throw new Exception(ex.Message);
             }
         }
-
     }
 }
