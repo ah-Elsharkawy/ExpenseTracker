@@ -14,7 +14,7 @@ namespace ExpenseTracker.Models
     public class Recurrence : Entity<int>
     {
         [Required,MinLength(3),MaxLength(20)]
-        public string Name { get; set; }
+        public string Description { get; set; }
         public DateTime Date { get; set; }
         [Required]
         public double Amount { get; set; }
