@@ -26,17 +26,20 @@ namespace ExpenseTracker.Services
 
         public RecurrnceDTO CreateRecurrence(RecurrnceDTO input)
         {
+            var uId = AbpSession.UserId;
+            if (uId == null)
+                return null;
             try
             {
                 var recurrence = this.Repository.Insert(new Recurrence
                 {
-                    Name = input.Name,
+                    Description = input.Description,
                     Date = input.Date,
                     Amount = input.Amount,
                     Type = input.Type,
                     Duration = input.Duration,
                     CategoryId = input.CategoryId,
-                    UserId = input.UserId,
+                    UserId = (int)uId,
 
                 });
                 return objectMapper.Map<RecurrnceDTO>(recurrence);
@@ -124,13 +127,13 @@ namespace ExpenseTracker.Services
                         new Recurrence()
                         {
                             Id = id,
-                            Name = input.Name,
+                            Description = input.Description,
                             Date = input.Date,
                             Amount = input.Amount,
                             Type = input.Type,
                             Duration = input.Duration,
                             CategoryId = input.CategoryId,
-                            UserId = input.UserId,
+                            //UserId = input.UserId,
                             
                         });
                 
