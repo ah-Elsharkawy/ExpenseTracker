@@ -52,13 +52,13 @@ namespace ExpenseTracker.Authorization.Accounts
                 false // Assumed email address is always confirmed. Change this if you want to implement email confirmation.
             );
             // Save user to database
-            //await _userManager.CreateAsync(user);
+            await _userManager.CreateAsync(user);
 
             // Generate email confirmation token
             var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
             // Manually construct the confirmation link
-            var confirmationLink = $"http://localhost:4200/api/v1/verification?email={user.EmailAddress}&token={Uri.EscapeDataString(token)}";
+            var confirmationLink = $"http://localhost:4200/verifyEmail?email={user.EmailAddress}&token={Uri.EscapeDataString(token)}";
 
             // Send email
             var emailBody = $"Please confirm your email by clicking this link: <a href=\"{confirmationLink}\">Confirm Email</a>";
@@ -73,6 +73,22 @@ namespace ExpenseTracker.Authorization.Accounts
             };
         }
 
+        public async Task<bool> CreateConfirmUserByEmail(string email)
+        {
+            // Retrieve the user by email
+            var user = await _userManager.FindByEmailAsync(email);
+            if (user == null)
+            {
+                return false; // User not found
+            }
+
+            // Confirm the email
+            user.IsEmailConfirmed = true;
+            var result = await _userManager.UpdateAsync(user);
+
+            // Return the result of the operation
+            return result.Succeeded;
+        }
 
     }
 }
