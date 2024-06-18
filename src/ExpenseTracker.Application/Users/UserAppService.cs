@@ -1,8 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Abp.Application.Services;
 using Abp.Application.Services.Dto;
@@ -14,6 +12,8 @@ using Abp.Extensions;
 using Abp.IdentityFramework;
 using Abp.Linq.Extensions;
 using Abp.Localization;
+using Abp.Net.Mail;
+using Abp.ObjectMapping;
 using Abp.Runtime.Session;
 using Abp.UI;
 using AutoMapper;
@@ -32,6 +32,7 @@ using Microsoft.EntityFrameworkCore;
 namespace ExpenseTracker.Users
 {
     // [AbpAuthorize(PermissionNames.Pages_Users)]
+
     public class UserAppService : AsyncCrudAppService<User, UserDto, long, PagedUserResultRequestDto, CreateUserDto, UserDto>, IUserAppService
     {
         private readonly IRepository<User, long> _repository;
@@ -42,6 +43,9 @@ namespace ExpenseTracker.Users
         private readonly IAbpSession _abpSession;
         private readonly LogInManager _logInManager;
         private readonly IMapper _mapper;
+        private readonly IEmailSender _emailSender;
+        private readonly IObjectMapper _objectMapper;
+
 
         public UserAppService(
             IRepository<User, long> repository,
@@ -51,7 +55,9 @@ namespace ExpenseTracker.Users
             IPasswordHasher<User> passwordHasher,
             IAbpSession abpSession,
             LogInManager logInManager,
-            IMapper mapper)
+            IMapper mapper,
+            IEmailSender emailSender,
+            IObjectMapper objectMapper)
             : base(repository)
         {
             _repository = repository;
@@ -62,6 +68,8 @@ namespace ExpenseTracker.Users
             _abpSession = abpSession;
             _logInManager = logInManager;
             _mapper = mapper;
+            _emailSender = emailSender;
+            _objectMapper = objectMapper;
         }
 
         public override async Task<UserDto> CreateAsync(CreateUserDto input)
@@ -83,14 +91,7 @@ namespace ExpenseTracker.Users
             }
             
             CurrentUnitOfWork.SaveChanges();
-            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-            var tokenBytes = System.Text.Encoding.UTF8.GetBytes(token);
-            var base64Token = Convert.ToBase64String(tokenBytes);
-            user.EmailConfirmationCode = token;
-            // Construct the callback URL
-            var callbackUrl = $"http://localhost:4200/confirm-email?userId={user.Id}&token={base64Token}";
-            await _emailSender.SendAsync(token, "Click at the following link to Confirm your email", callbackUrl);
 
             return MapToEntityDto(user);
 
@@ -355,6 +356,18 @@ namespace ExpenseTracker.Users
             resetPasswordDto.Token = System.Text.Encoding.UTF8.GetString(data);
             var result = await _userManager.ResetPasswordAsync(user, resetPasswordDto.Token, resetPasswordDto.NewPassword);
             return result.Succeeded ;
+        }
+        public async Task<bool> ConfirmEmail(string Email, string token)
+        {
+            var user = await _userManager.FindByEmailAsync(Email);
+            if (user == null)
+            {
+                return false;
+            }
+            byte[] data = Convert.FromBase64String(token);
+            token = System.Text.Encoding.UTF8.GetString(data);
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            return result.Succeeded;
         }
     }
 

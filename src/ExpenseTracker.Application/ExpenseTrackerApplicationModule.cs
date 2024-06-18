@@ -1,6 +1,7 @@
 ﻿using Abp.AutoMapper;
 using Abp.Configuration;
 using Abp.Modules;
+using Abp.Net.Mail;
 using Abp.Reflection.Extensions;
 using Abp.Zero.Configuration;
 using ExpenseTracker.Authorization;
@@ -20,7 +21,7 @@ namespace ExpenseTracker
         {
             var settingManager = IocManager.Resolve<ISettingManager>();
             settingManager.ChangeSettingForApplicationAsync(AbpZeroSettingNames.UserManagement.IsEmailConfirmationRequiredForLogin, "true");
-
+            
             base.PostInitialize();
         }
         public override void Initialize()

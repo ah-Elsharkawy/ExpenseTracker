@@ -16,5 +16,7 @@ namespace ExpenseTracker.Users
         Task<bool> ChangePassword(ChangePasswordDto input);
 
         Task<bool> GetPasswordResetToken(string email);
+         Task<bool> ConfirmEmail(string Email, string token);
+
     }
 }
