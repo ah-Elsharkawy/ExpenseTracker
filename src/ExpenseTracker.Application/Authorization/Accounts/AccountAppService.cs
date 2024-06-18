@@ -60,7 +60,7 @@ namespace ExpenseTracker.Authorization.Accounts
             var base64Token = Convert.ToBase64String(tokenBytes);
             user.EmailConfirmationCode = token;
             // Construct the callback URL
-            var callbackUrl = $"http://localhost:4200/confirm-email?userId={user.Id}&token={base64Token}";
+            var callbackUrl = $"http://localhost:4200/confirm-email?Email={user.EmailAddress}&token={base64Token}";
             try
             {
                 _emailSender.Send(user.EmailAddress, "Click at the following link to Confirm your email", callbackUrl);
