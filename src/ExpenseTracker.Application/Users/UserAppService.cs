@@ -14,8 +14,6 @@ using Abp.Extensions;
 using Abp.IdentityFramework;
 using Abp.Linq.Extensions;
 using Abp.Localization;
-using Abp.Net.Mail;
-using Abp.ObjectMapping;
 using Abp.Runtime.Session;
 using Abp.UI;
 using AutoMapper;
@@ -44,9 +42,6 @@ namespace ExpenseTracker.Users
         private readonly IAbpSession _abpSession;
         private readonly LogInManager _logInManager;
         private readonly IMapper _mapper;
-        private readonly IObjectMapper _objectMapper;
-        private readonly IEmailSender _emailSender;
-        private readonly ISettingDefinitionManager settingDefinitionManager1;
 
         public UserAppService(
             IRepository<User, long> repository,
@@ -56,10 +51,7 @@ namespace ExpenseTracker.Users
             IPasswordHasher<User> passwordHasher,
             IAbpSession abpSession,
             LogInManager logInManager,
-            IMapper mapper,
-            IObjectMapper objectMapper,
-            IEmailSender emailSender,
-            ISettingDefinitionManager  settingDefinitionManager)
+            IMapper mapper)
             : base(repository)
         {
             _repository = repository;
@@ -70,9 +62,6 @@ namespace ExpenseTracker.Users
             _abpSession = abpSession;
             _logInManager = logInManager;
             _mapper = mapper;
-            _objectMapper = objectMapper;
-            _emailSender = emailSender;
-            settingDefinitionManager1 = settingDefinitionManager;
         }
 
         public override async Task<UserDto> CreateAsync(CreateUserDto input)
@@ -82,7 +71,7 @@ namespace ExpenseTracker.Users
             var user = ObjectMapper.Map<User>(input);
 
             user.TenantId = AbpSession.TenantId;
-            user.IsEmailConfirmed = true;
+            user.IsEmailConfirmed = false;
 
             await _userManager.InitializeOptionsAsync(AbpSession.TenantId);
 
@@ -92,10 +81,19 @@ namespace ExpenseTracker.Users
             {
                 CheckErrors(await _userManager.SetRolesAsync(user, input.RoleNames));
             }
-
+            
             CurrentUnitOfWork.SaveChanges();
+            var token = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+            var tokenBytes = System.Text.Encoding.UTF8.GetBytes(token);
+            var base64Token = Convert.ToBase64String(tokenBytes);
+            user.EmailConfirmationCode = token;
+            // Construct the callback URL
+            var callbackUrl = $"http://localhost:4200/confirm-email?userId={user.Id}&token={base64Token}";
+            await _emailSender.SendAsync(token, "Click at the following link to Confirm your email", callbackUrl);
 
             return MapToEntityDto(user);
+
         }
 
         public override async Task<UserDto> UpdateAsync(UserDto input)

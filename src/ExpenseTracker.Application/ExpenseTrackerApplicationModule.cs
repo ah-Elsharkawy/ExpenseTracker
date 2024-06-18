@@ -1,6 +1,8 @@
 ﻿using Abp.AutoMapper;
+using Abp.Configuration;
 using Abp.Modules;
 using Abp.Reflection.Extensions;
+using Abp.Zero.Configuration;
 using ExpenseTracker.Authorization;
 
 namespace ExpenseTracker
@@ -14,7 +16,13 @@ namespace ExpenseTracker
         {
             Configuration.Authorization.Providers.Add<ExpenseTrackerAuthorizationProvider>();
         }
+        public override void PostInitialize()
+        {
+            var settingManager = IocManager.Resolve<ISettingManager>();
+            settingManager.ChangeSettingForApplicationAsync(AbpZeroSettingNames.UserManagement.IsEmailConfirmationRequiredForLogin, "true");
 
+            base.PostInitialize();
+        }
         public override void Initialize()
         {
             var thisAssembly = typeof(ExpenseTrackerApplicationModule).GetAssembly();
