@@ -7,6 +7,7 @@ using ExpenseTracker.Dto;
 using ExpenseTracker.Enums;
 using ExpenseTracker.IServices;
 using ExpenseTracker.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using System;
@@ -30,12 +31,13 @@ namespace ExpenseTracker.Services
             _objectMapper = objectMapper;
             AbpSession = NullAbpSession.Instance;
         }
+        [Authorize]
         public TransactionDTO CreateTransaction(TransactionDTO input)
         {
             //add new transaction
             var uId = AbpSession.UserId;
             if(uId == null)
-                return null;
+                return new TransactionDTO();
             var transaction = _transactionRepository.Insert(new Transaction { UserId =(int)uId, Amount = input.Amount, CategoryId = input.CategoryId, Type = input.Type, Date = input.Date, Description = input.Description });
             Console.WriteLine(uId);
             return _objectMapper.Map<TransactionDTO>(transaction);
