@@ -22,23 +22,34 @@ namespace ExpenseTracker.Services
     {
         private readonly IRepository<Transaction> _transactionRepository;
         private readonly IObjectMapper _objectMapper;
+        private readonly UserManager _userManager;
         public IAbpSession AbpSession { get; set; }
 
 
-        public TransactionAppService(IRepository<Transaction> transactionRepository, IObjectMapper objectMapper)
+        public TransactionAppService(IRepository<Transaction> transactionRepository, IObjectMapper objectMapper, UserManager userManager)
         {
             _transactionRepository = transactionRepository;
             _objectMapper = objectMapper;
             AbpSession = NullAbpSession.Instance;
+            _userManager = userManager;
         }
         [Authorize]
         public TransactionDTO CreateTransaction(TransactionDTO input)
         {
+
             //add new transaction
             var uId = AbpSession.UserId;
             if(uId == null)
                 return new TransactionDTO();
+            
             var transaction = _transactionRepository.Insert(new Transaction { UserId =(int)uId, Amount = input.Amount, CategoryId = input.CategoryId, Type = input.Type, Date = input.Date, Description = input.Description });
+            var user = _userManager.GetUserById((int)uId);
+
+            if(transaction.Type == TransactionType.Income)
+                user.Balance += transaction.Amount;
+            else
+                user.Balance -= transaction.Amount;
+
             Console.WriteLine(uId);
             return _objectMapper.Map<TransactionDTO>(transaction);
         }
@@ -94,17 +105,28 @@ namespace ExpenseTracker.Services
             try
             {
                 Transaction t = null;
+                var uId = AbpSession.UserId;
+                var user = _userManager.GetUserById((int)uId);
                 if(transaction != null)
                 {
                      t = _transactionRepository.Get(transaction.Id);
-                    t.Amount = transaction.Amount;
+                   
                     t.CategoryId = transaction.CategoryId;
+                    if(t.Amount != transaction.Amount)
+                    {
+                        user.Balance -= t.Amount;
+                        if (transaction.Type == TransactionType.Income)
+                            user.Balance += transaction.Amount;
+                        else
+                            user.Balance -= transaction.Amount;
+                    }
+                    t.Amount = transaction.Amount;
                     t.Type = transaction.Type;
                     t.Date = DateTime.Now;
                     t.Description = transaction.Description;
                 }
 
-                var uId = AbpSession.UserId;
+                
 
                 if (uId == null || t?.UserId != uId) return null;
                 var updatedTransaction = _transactionRepository.Update(t);
@@ -120,6 +142,15 @@ namespace ExpenseTracker.Services
         {
             try
             {
+                Transaction t = null;
+                t = _transactionRepository.Get(id);
+                var uId = AbpSession.UserId;
+                var user = _userManager.GetUserById((int)uId);
+                if (t != null && user != null)
+                {
+                    user.Balance -= t.Amount;
+                }
+
                 _transactionRepository.Delete(id);
             }
             catch (Exception ex)
