@@ -5,6 +5,8 @@ using ExpenseTracker.Dto;
 using ExpenseTracker.Enums;
 using ExpenseTracker.IServices;
 using ExpenseTracker.Models;
+using ExpenseTracker.Scedulers;
+using Hangfire;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,12 +20,15 @@ namespace ExpenseTracker.Services
         private readonly IObjectMapper objectMapper;
         private readonly IRepository<Recurrence> Repository;
 
+
         public RecurrenceAppService(IObjectMapper objectMapper, IRepository<Recurrence> Repository)
         {
             this.objectMapper = objectMapper;
             this.Repository = Repository;
+         //   this.recurrenceSceduler = recurrenceSceduler;
         }
 
+      
         public RecurrnceDTO CreateRecurrence(RecurrnceDTO input)
         {
             var uId = AbpSession.UserId;
@@ -40,8 +45,10 @@ namespace ExpenseTracker.Services
                     Duration = input.Duration,
                     CategoryId = input.CategoryId,
                     UserId = (int)uId,
+                    Id = input.Id
 
                 });
+                RecurringJob.AddOrUpdate<RecurrenceSceduler>(recurrence.Id.ToString(), x => x.ScheduleRecurringTransactions(recurrence), "0 0 1 * *");
                 return objectMapper.Map<RecurrnceDTO>(recurrence);
 
             }catch (Exception ex)

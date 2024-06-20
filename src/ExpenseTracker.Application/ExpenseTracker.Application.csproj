@@ -12,6 +12,10 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Abp.HangFire.AspNetCore" Version="9.2.2" />
+    <PackageReference Include="Hangfire.SqlServer" Version="1.8.12" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\ExpenseTracker.Core\ExpenseTracker.Core.csproj" />
   </ItemGroup>
 </Project>
