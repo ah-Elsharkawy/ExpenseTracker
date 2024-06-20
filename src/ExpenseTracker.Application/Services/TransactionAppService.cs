@@ -95,12 +95,17 @@ namespace ExpenseTracker.Services
                 if(transaction != null)
                 {
                      t = _transactionRepository.Get(transaction.Id);
+                    t.Amount = transaction.Amount;
+                    t.CategoryId = transaction.CategoryId;
+                    t.Type = transaction.Type;
+                    t.Date = DateTime.Now;
+                    t.Description = transaction.Description;
                 }
 
                 var uId = AbpSession.UserId;
 
                 if (uId == null || t?.UserId != uId) return null;
-                var updatedTransaction = _transactionRepository.Update(new Transaction { UserId = (int)uId , Id = transaction.Id, Amount = transaction.Amount, CategoryId = transaction.CategoryId, Type = transaction.Type, Date = transaction.Date, Description = transaction.Description });
+                var updatedTransaction = _transactionRepository.Update(t);
                 return _objectMapper.Map<TransactionDTO>(updatedTransaction);
             }
             catch (Exception ex)
