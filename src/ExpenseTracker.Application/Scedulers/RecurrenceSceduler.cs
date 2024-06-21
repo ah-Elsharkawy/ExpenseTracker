@@ -10,6 +10,7 @@ using Abp.Dependency;
 using Abp.Domain.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 using Abp.Domain.Uow;
+using System.Diagnostics;
 
 namespace ExpenseTracker.Scedulers
 {
@@ -17,82 +18,40 @@ namespace ExpenseTracker.Scedulers
     public class RecurrenceSceduler: ITransientDependency
     {
 
-        private readonly IRepository<Recurrence> recurrence;
-        private readonly IRepository<Transaction> transaction;
-        private readonly IIocResolver _iocResolver;
-        public RecurrenceSceduler(IRepository<Transaction> transaction, IRepository<Recurrence> recurrence, IIocResolver iocResolver)
+       private readonly IRepository<Recurrence> RecurrenceRepo;
+        private readonly IRepository<Transaction> transactionRepository;
+        private readonly IUnitOfWorkManager unitOfWorkManager;
+        public RecurrenceSceduler(IRepository<Recurrence> Repository, IUnitOfWorkManager unitOfWorkManager, IRepository<Transaction> transactionRepository)
         {
-            this.transaction = transaction;
-            this.recurrence = recurrence;
-            _iocResolver = iocResolver;
+            this.RecurrenceRepo = Repository;
+            this.unitOfWorkManager = unitOfWorkManager;
+            this.transactionRepository = transactionRepository;
         }
 
-
-        [UnitOfWork]
-        public void ScheduleRecurringTransactions(Recurrence recurrnce)
-        {
-            var lastTransaction = transaction.GetAllList().FindLast(t => t.UserId == recurrnce.UserId);
-            if(lastTransaction == null)
-            {
-                lastTransaction = new Transaction
-                {
-                    Id = 0
-                };
-            }
-            var transactionModel = ConvertRecurrenceToTransaction(recurrnce , lastTransaction);
-            try
-            {
-                RecurringJob.AddOrUpdate(
-              recurrnce.Id.ToString(),
-              () => ExecuteTransactionJob(recurrnce),
-              "0 0 1 * *" // Cron expression for scheduling
-          );
-
-            }
-            catch (Exception ex)
-            {
-                throw new Exception(ex.Message);
-            }
-
-        }
-        public void RemoveRecurringTransaction(int r)
-        {
-             RecurringJob.RemoveIfExists(r.ToString());
-        }
         public void ExecuteTransactionJob(Recurrence recurrence)
         {
-            using (var transactionRepository = _iocResolver.ResolveAsDisposable<IRepository<Transaction>>())
+            using (var uow = unitOfWorkManager.Begin())
             {
-
-
-
-                var lastTransaction = transactionRepository.Object.GetAllList().FindLast(t => t.UserId == recurrence.UserId);
-                if (lastTransaction == null)
+                var transaction = new Transaction
                 {
-                    lastTransaction = new Transaction { Id = 0 };
+                    Amount = recurrence.Amount,
+                    Date = DateTime.Now,
+                    Description = recurrence.Description,
+                    Type = recurrence.Type,
+                    CategoryId = recurrence.CategoryId,
+                    UserId = (int)recurrence.UserId
+                };
+                recurrence.Duration = recurrence.Duration - 1;
+                RecurrenceRepo.Update(recurrence);
+                transactionRepository.Insert(transaction);
+               if(recurrence.Duration == 0)
+                {
+                    RecurringJob.RemoveIfExists(recurrence.Id.ToString());
+                    RecurrenceRepo.Delete(recurrence);
                 }
-
-                var transaction = ConvertRecurrenceToTransaction(recurrence, lastTransaction);
-                transactionRepository.Object.Insert(transaction);
-
-                //                scope.ServiceProvider.GetRequiredService<IUnitOfWorkManager>().Current.SaveChanges();
+                uow.Complete();
             }
         }
-        private Transaction ConvertRecurrenceToTransaction(Recurrence recurrnce , Transaction last)
-        {
-            return new Transaction
-            {
-                Amount = recurrnce.Amount,
-                CategoryId = recurrnce.CategoryId,
-                Date = recurrnce.Date,
-                Description = recurrnce.Description,
-                Type = recurrnce.Type,
-                UserId = (int)recurrnce.UserId,
-                Id = last.Id + 1,
-                
-            };
-        }
 
-        
     }
 }

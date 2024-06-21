@@ -94,7 +94,7 @@ namespace ExpenseTracker.Web.Host.Startup
                         }
                             
                     );
-
+            services.AddHangfireServer();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
@@ -112,7 +112,6 @@ namespace ExpenseTracker.Web.Host.Startup
 
             app.UseAbpRequestLocalization();
             app.UseHangfireDashboard();
-            app.UseHangfireServer();
             var serviceProvider = app.ApplicationServices;
             GlobalConfiguration.Configuration.UseActivator(new Scedulers.Activator(serviceProvider));
             app.UseEndpoints(endpoints =>
