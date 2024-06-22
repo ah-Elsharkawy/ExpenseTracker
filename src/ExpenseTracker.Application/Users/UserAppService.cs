@@ -357,8 +357,10 @@ namespace ExpenseTracker.Users
             var result = await _userManager.ResetPasswordAsync(user, resetPasswordDto.Token, resetPasswordDto.NewPassword);
             return result.Succeeded ;
         }
-        public async Task<bool> ConfirmEmail(string Email, string token)
+        public async Task<bool> ConfirmEmail(ConfirmEmailDto Data)
         {
+            string Email = Data.Email;
+            string token = Data.token;
             var user = await _userManager.FindByEmailAsync(Email);
             if (user == null)
             {
