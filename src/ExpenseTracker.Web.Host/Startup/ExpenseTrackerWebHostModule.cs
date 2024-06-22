@@ -43,6 +43,7 @@ namespace ExpenseTracker.Web.Host.Startup
             settingManager.ChangeSettingForApplicationAsync(EmailSettingNames.SmtpPassword, "svggkqejpjbmekxh").Wait();
             settingManager.ChangeSettingForApplicationAsync(EmailSettingNames.SmtpDomain, "smtp-mail.outlook.com").Wait();
             settingManager.ChangeSettingForApplicationAsync(EmailSettingNames.SmtpEnableSsl, "true").Wait();
+            settingManager.ChangeSettingForApplicationAsync(EmailSettingNames.SmtpUseDefaultCredentials, "false").Wait();
             settingManager.ChangeSettingForApplicationAsync("Abp.Net.Mail.Smtp.Domain", "outlook.live.com").Wait();
 
         }
