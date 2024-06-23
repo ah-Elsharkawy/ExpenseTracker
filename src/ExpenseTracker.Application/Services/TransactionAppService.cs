@@ -36,22 +36,33 @@ namespace ExpenseTracker.Services
         [Authorize]
         public TransactionDTO CreateTransaction(TransactionDTO input)
         {
+            try
+            {
+                //add new transaction
+                var uId = AbpSession.UserId;
+                if (uId == null)
+                    return new TransactionDTO();
 
-            //add new transaction
-            var uId = AbpSession.UserId;
-            if(uId == null)
-                return new TransactionDTO();
-            
-            var transaction = _transactionRepository.Insert(new Transaction { UserId =(int)uId, Amount = input.Amount, CategoryId = input.CategoryId, Type = input.Type, Date = input.Date, Description = input.Description });
-            var user = _userManager.GetUserById((int)uId);
+                var transaction = _transactionRepository.Insert(new Transaction { UserId = (int)uId, Amount = input.Amount, CategoryId = input.CategoryId, Type = input.Type, Date = input.Date, Description = input.Description });
+                var user = _userManager.GetUserById((int)uId);
 
-            if(transaction.Type == TransactionType.Income)
-                user.Balance += transaction.Amount;
-            else
-                user.Balance -= transaction.Amount;
+                if (transaction.Type == TransactionType.Income)
+                    user.Balance += transaction.Amount;
+                else
+                {
+                    if ((user.Balance - transaction.Amount) < 0)
+                        throw new Exception("Not enough balance");
+                    user.Balance -= transaction.Amount;
+                }
 
-            Console.WriteLine(uId);
-            return _objectMapper.Map<TransactionDTO>(transaction);
+
+                Console.WriteLine(uId);
+                return _objectMapper.Map<TransactionDTO>(transaction);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
         }
         public List<TransactionDTO> GetTransactions()
         {
@@ -118,7 +129,12 @@ namespace ExpenseTracker.Services
                         if (transaction.Type == TransactionType.Income)
                             user.Balance += transaction.Amount;
                         else
+                        {
+                            if(user.Balance - transaction.Amount < 0)
+                                throw new Exception("Not enough balance");
                             user.Balance -= transaction.Amount;
+                        }
+                            
                     }
                     t.Amount = transaction.Amount;
                     t.Type = transaction.Type;
@@ -148,6 +164,8 @@ namespace ExpenseTracker.Services
                 var user = _userManager.GetUserById((int)uId);
                 if (t != null && user != null)
                 {
+                    if ((user.Balance - t.Amount) < 0)
+                        throw new Exception("Not enough balance");
                     user.Balance -= t.Amount;
                 }
 
