@@ -32,16 +32,17 @@ namespace ExpenseTracker.Services
             AbpSession = NullAbpSession.Instance;
         }
         [Authorize]
-        public TransactionDTO CreateTransaction(TransactionDTO input)
+        public TransactionDTO CreateTransaction(TransactionDTO input ,int ?userid)
         {
             //add new transaction
-            var uId = AbpSession.UserId;
+            var uId = AbpSession.UserId ?? userid;
             if(uId == null)
                 return new TransactionDTO();
             var transaction = _transactionRepository.Insert(new Transaction { UserId =(int)uId, Amount = input.Amount, CategoryId = input.CategoryId, Type = input.Type, Date = input.Date, Description = input.Description });
             Console.WriteLine(uId);
             return _objectMapper.Map<TransactionDTO>(transaction);
         }
+   
         public List<TransactionDTO> GetTransactions()
         {
             var uId = AbpSession.UserId;

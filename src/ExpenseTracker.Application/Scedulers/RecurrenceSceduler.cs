@@ -43,7 +43,7 @@ namespace ExpenseTracker.Scedulers
                    Type = recurrence.Type,
                                       
                    
-               });
+               },(int)recurrence.UserId);
 
                 recurrence.Duration = recurrence.Duration - 1;
                 RecurrenceRepo.Update(recurrence);
@@ -52,7 +52,9 @@ namespace ExpenseTracker.Scedulers
                 {
                     RecurringJob.RemoveIfExists(recurrence.Id.ToString());
                     RecurrenceRepo.Delete(recurrence);
+                    
                 }
+             
                 uow.Complete();
             }
         }

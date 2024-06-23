@@ -13,7 +13,7 @@ namespace ExpenseTracker.IServices
     {
         //return type is TransactionDTO,//method name is CreateTransaction,//parameter is TransactionDTO
         //create transaction
-        TransactionDTO CreateTransaction(TransactionDTO input);
+        TransactionDTO CreateTransaction(TransactionDTO input, int? userid);
         List<TransactionDTO> GetTransactions();
         TransactionDTO GetTransactionById(int id);
         TransactionDTO UpdateTransaction(TransactionDTO transaction);
