@@ -57,23 +57,14 @@ namespace ExpenseTracker.Web.Host.Startup
                     _defaultCorsPolicyName,
                     builder => builder
                     .AllowAnyOrigin()
-                        .WithOrigins(
-                            // App:CorsOrigins in appsettings.json can contain more than one address separated by comma.
-                            _appConfiguration["App:CorsOrigins"]
-                                .Split(",", StringSplitOptions.RemoveEmptyEntries)
-                                .Select(o => o.RemovePostFix("/"))
-                                .ToArray()
-                        )
-                        
                         .AllowAnyHeader()
                         .AllowAnyMethod()
-                        .AllowCredentials()
                 )
             );
 
             // Swagger - Enable this line and the related lines in Configure method to enable swagger UI
             ConfigureSwagger(services);
-
+            
             // Configure Abp and Dependency Injection
             services.AddAbpWithoutCreatingServiceProvider<ExpenseTrackerWebHostModule>(
                 // Configure Log4Net logging
@@ -133,8 +124,8 @@ namespace ExpenseTracker.Web.Host.Startup
                     .GetManifestResourceStream("ExpenseTracker.Web.Host.wwwroot.swagger.ui.index.html");
                 options.DisplayRequestDuration(); // Controls the display of the request duration (in milliseconds) for "Try it out" requests.
             }); // URL: /swagger
-        }
 
+        }
         private void ConfigureSwagger(IServiceCollection services)
         {
             services.AddSwaggerGen(options =>

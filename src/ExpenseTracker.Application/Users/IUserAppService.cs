@@ -14,5 +14,9 @@ namespace ExpenseTracker.Users
         Task ChangeLanguage(ChangeUserLanguageDto input);
 
         Task<bool> ChangePassword(ChangePasswordDto input);
+
+        Task<bool> GetPasswordResetToken(string email);
+         Task<bool> ConfirmEmail(ConfirmEmailDto Data);
+
     }
 }
