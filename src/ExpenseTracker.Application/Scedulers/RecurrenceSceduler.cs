@@ -21,34 +21,40 @@ namespace ExpenseTracker.Scedulers
        private readonly IRepository<Recurrence> RecurrenceRepo;
         private readonly IRepository<Transaction> transactionRepository;
         private readonly IUnitOfWorkManager unitOfWorkManager;
-        public RecurrenceSceduler(IRepository<Recurrence> Repository, IUnitOfWorkManager unitOfWorkManager, IRepository<Transaction> transactionRepository)
+        private readonly ITransactionAppService transactionAppService;
+        public RecurrenceSceduler(IRepository<Recurrence> Repository, IUnitOfWorkManager unitOfWorkManager, IRepository<Transaction> transactionRepository, ITransactionAppService transactionAppService)
         {
             this.RecurrenceRepo = Repository;
             this.unitOfWorkManager = unitOfWorkManager;
             this.transactionRepository = transactionRepository;
+            this.transactionAppService = transactionAppService;
         }
 
         public void ExecuteTransactionJob(Recurrence recurrence)
         {
             using (var uow = unitOfWorkManager.Begin())
             {
-                var transaction = new Transaction
-                {
-                    Amount = recurrence.Amount,
-                    Date = DateTime.Now,
-                    Description = recurrence.Description,
-                    Type = recurrence.Type,
-                    CategoryId = recurrence.CategoryId,
-                    UserId = (int)recurrence.UserId
-                };
+               transactionAppService.CreateTransaction(new TransactionDTO
+               {
+                   Amount = recurrence.Amount,
+                   CategoryId = recurrence.CategoryId,
+                   Date = DateTime.Now,
+                   Description = recurrence.Description,
+                   Type = recurrence.Type,
+                                      
+                   
+               },(int)recurrence.UserId);
+
                 recurrence.Duration = recurrence.Duration - 1;
                 RecurrenceRepo.Update(recurrence);
-                transactionRepository.Insert(transaction);
+               
                if(recurrence.Duration == 0)
                 {
                     RecurringJob.RemoveIfExists(recurrence.Id.ToString());
                     RecurrenceRepo.Delete(recurrence);
+                    
                 }
+             
                 uow.Complete();
             }
         }

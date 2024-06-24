@@ -34,12 +34,12 @@ namespace ExpenseTracker.Services
             _userManager = userManager;
         }
         [Authorize]
-        public TransactionDTO CreateTransaction(TransactionDTO input)
+        public TransactionDTO CreateTransaction(TransactionDTO input ,int ?userid)
         {
             try
             {
                 //add new transaction
-                var uId = AbpSession.UserId;
+                var uId = AbpSession.UserId ?? userid;
                 if (uId == null)
                     return new TransactionDTO();
 
