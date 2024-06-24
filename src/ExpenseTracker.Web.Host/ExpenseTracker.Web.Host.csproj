@@ -13,10 +13,12 @@
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
   <ItemGroup>
+    <Content Remove="appsettings.json" />
     <Content Remove="wwwroot\swagger\ui\index.html" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="appsettings.json" />
     <None Update="Dockerfile">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
@@ -33,6 +35,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Abp.Castle.Log4Net" Version="9.2.2" />
+    <PackageReference Include="Abp.MailKit" Version="9.2.2" />
     <PackageReference Include="Abp.HangFire.AspNetCore" Version="9.2.2" />
     <PackageReference Include="Hangfire.SqlServer" Version="1.8.12" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.4">

@@ -1,17 +1,18 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Abp.Application.Services;
 using Abp.Application.Services.Dto;
 using Abp.Authorization;
+using Abp.Configuration;
 using Abp.Domain.Entities;
 using Abp.Domain.Repositories;
 using Abp.Extensions;
 using Abp.IdentityFramework;
 using Abp.Linq.Extensions;
 using Abp.Localization;
+using Abp.Net.Mail;
 using Abp.ObjectMapping;
 using Abp.Runtime.Session;
 using Abp.UI;
@@ -31,6 +32,7 @@ using Microsoft.EntityFrameworkCore;
 namespace ExpenseTracker.Users
 {
     // [AbpAuthorize(PermissionNames.Pages_Users)]
+
     public class UserAppService : AsyncCrudAppService<User, UserDto, long, PagedUserResultRequestDto, CreateUserDto, UserDto>, IUserAppService
     {
         private readonly IRepository<User, long> _repository;
@@ -41,7 +43,9 @@ namespace ExpenseTracker.Users
         private readonly IAbpSession _abpSession;
         private readonly LogInManager _logInManager;
         private readonly IMapper _mapper;
+        private readonly IEmailSender _emailSender;
         private readonly IObjectMapper _objectMapper;
+
 
         public UserAppService(
             IRepository<User, long> repository,
@@ -52,6 +56,7 @@ namespace ExpenseTracker.Users
             IAbpSession abpSession,
             LogInManager logInManager,
             IMapper mapper,
+            IEmailSender emailSender,
             IObjectMapper objectMapper)
             : base(repository)
         {
@@ -63,6 +68,7 @@ namespace ExpenseTracker.Users
             _abpSession = abpSession;
             _logInManager = logInManager;
             _mapper = mapper;
+            _emailSender = emailSender;
             _objectMapper = objectMapper;
         }
 
@@ -73,7 +79,7 @@ namespace ExpenseTracker.Users
             var user = ObjectMapper.Map<User>(input);
 
             user.TenantId = AbpSession.TenantId;
-            user.IsEmailConfirmed = true;
+            user.IsEmailConfirmed = false;
 
             await _userManager.InitializeOptionsAsync(AbpSession.TenantId);
 
@@ -83,10 +89,12 @@ namespace ExpenseTracker.Users
             {
                 CheckErrors(await _userManager.SetRolesAsync(user, input.RoleNames));
             }
-
+            
             CurrentUnitOfWork.SaveChanges();
 
+
             return MapToEntityDto(user);
+
         }
 
         public override async Task<UserDto> UpdateAsync(UserDto input)
@@ -309,6 +317,61 @@ namespace ExpenseTracker.Users
                 throw new Exception(ex.Message);
             }
         }
+
+        //<summary>
+        //Send password reset token to the user
+        //</summary>
+        public async Task<bool> GetPasswordResetToken(string email)
+        {
+            var user = await _userManager.FindByEmailAsync(email);
+            if(user == null)
+            {
+                return false ;
+            }
+            var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+            token = Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(token));
+            var resetLink = $"http://localhost:4200/reset-password?email={email}&token={token}";
+            try
+            {
+                 await _emailSender.SendAsync(email, "Reset Password", resetLink);
+                
+            }catch(Exception ex)
+            {
+                throw new UserFriendlyException("Failed to send email");
+            }
+            
+
+            return true;
+        }
+        public async Task<bool> ResetForgottenPassword(ForgotPasswordDto resetPasswordDto)
+        {
+            var user = await _userManager.FindByEmailAsync(resetPasswordDto.Email);
+            if (user == null)
+            {
+                return false;
+            }
+            byte[] data = Convert.FromBase64String(resetPasswordDto.Token);
+
+
+            resetPasswordDto.Token = System.Text.Encoding.UTF8.GetString(data);
+            var result = await _userManager.ResetPasswordAsync(user, resetPasswordDto.Token, resetPasswordDto.NewPassword);
+            return result.Succeeded ;
+        }
+        public async Task<bool> ConfirmEmail(ConfirmEmailDto Data)
+        {
+            string Email = Data.Email;
+            string token = Data.token;
+            var user = await _userManager.FindByEmailAsync(Email);
+            if (user == null)
+            {
+                return false;
+            }
+            byte[] data = Convert.FromBase64String(token);
+            token = System.Text.Encoding.UTF8.GetString(data);
+            var result = await _userManager.ConfirmEmailAsync(user, token);
+            return result.Succeeded;
+        }
     }
+
 }
 
