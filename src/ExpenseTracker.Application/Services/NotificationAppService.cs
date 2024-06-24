@@ -44,5 +44,20 @@ namespace ExpenseTracker.Services
                 throw new Exception(ex.Message);
             }
         }
+
+        public async Task updateNotification(int notificationId)
+        {
+            try
+            {
+                var notification = await _repository.GetAsync(notificationId);
+                if(notification == null)
+                    throw new Exception("notification not found");
+                notification.IsRead = true;
+                await _repository.UpdateAsync(notification);
+            }
+            catch(Exception ex) { 
+                throw new Exception(ex.Message);
+            }
+        }
     }
 }

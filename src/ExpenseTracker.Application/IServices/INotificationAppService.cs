@@ -11,5 +11,6 @@ namespace ExpenseTracker.IServices
     public interface INotificationAppService
     {
         Task<List<NotificationDTO>> GetNotifications();
+        Task updateNotification(int notificationId);
     }
 }
