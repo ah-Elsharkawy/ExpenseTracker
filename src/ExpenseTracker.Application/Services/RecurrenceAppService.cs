@@ -5,6 +5,8 @@ using ExpenseTracker.Dto;
 using ExpenseTracker.Enums;
 using ExpenseTracker.IServices;
 using ExpenseTracker.Models;
+using ExpenseTracker.Scedulers;
+using Hangfire;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,12 +19,15 @@ namespace ExpenseTracker.Services
     {
         private readonly IObjectMapper objectMapper;
         private readonly IRepository<Recurrence> Repository;
+        private readonly RecurrenceSceduler recurrenceSceduler;
 
-        public RecurrenceAppService(IObjectMapper objectMapper, IRepository<Recurrence> Repository)
+        public RecurrenceAppService(IObjectMapper objectMapper, IRepository<Recurrence> Repository, RecurrenceSceduler recurrenceSceduler)
         {
             this.objectMapper = objectMapper;
             this.Repository = Repository;
+            this.recurrenceSceduler = recurrenceSceduler;
         }
+
 
         public RecurrnceDTO CreateRecurrence(RecurrnceDTO input)
         {
@@ -40,8 +45,12 @@ namespace ExpenseTracker.Services
                     Duration = input.Duration,
                     CategoryId = input.CategoryId,
                     UserId = (int)uId,
+                    
 
                 });
+
+                CurrentUnitOfWork.SaveChanges();
+                RecurringJob.AddOrUpdate<RecurrenceSceduler>(recurrence.Id.ToString(), x => x.ExecuteTransactionJob(recurrence), "0 0 1 * *");
                 return objectMapper.Map<RecurrnceDTO>(recurrence);
 
             }catch (Exception ex)
@@ -61,9 +70,10 @@ namespace ExpenseTracker.Services
                 {
                     this.Repository.Delete(recurrence);
                 }
-               
 
+                RecurringJob.RemoveIfExists(id.ToString());
             }
+            
             catch(Exception ex)
             {
                 throw new Exception(ex.Message);
@@ -123,7 +133,7 @@ namespace ExpenseTracker.Services
 
              
                 
-                    this.Repository.Update(
+                 var recurrence =    this.Repository.Update(
                         new Recurrence()
                         {
                             Id = id,
@@ -137,7 +147,10 @@ namespace ExpenseTracker.Services
                             
                         });
                 
+                    CurrentUnitOfWork.SaveChanges();
+                    RecurringJob.AddOrUpdate<RecurrenceSceduler>(recurrence.Id.ToString(), x => x.ExecuteTransactionJob(recurrence), "0 0 1 * *");
             }
+
             catch (Exception ex)
             {
                 throw new Exception(ex.Message);

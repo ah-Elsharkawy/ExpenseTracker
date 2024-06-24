@@ -1,10 +1,13 @@
 ﻿using Abp.AutoMapper;
 using Abp.Configuration;
+using Hangfire;
 using Abp.Modules;
 using Abp.Net.Mail;
 using Abp.Reflection.Extensions;
 using Abp.Zero.Configuration;
 using ExpenseTracker.Authorization;
+using System;
+using Abp.Hangfire.Configuration;
 
 namespace ExpenseTracker
 {
@@ -16,6 +19,7 @@ namespace ExpenseTracker
         public override void PreInitialize()
         {
             Configuration.Authorization.Providers.Add<ExpenseTrackerAuthorizationProvider>();
+            Configuration.BackgroundJobs.UseHangfire();
         }
         public override void PostInitialize()
         {

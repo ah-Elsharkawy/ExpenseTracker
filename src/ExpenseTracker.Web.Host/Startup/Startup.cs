@@ -17,7 +17,8 @@ using Abp.AspNetCore.SignalR.Hubs;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using System.IO;
-
+using Hangfire;
+using ExpenseTracker.Scedulers;
 namespace ExpenseTracker.Web.Host.Startup
 {
     public class Startup
@@ -35,13 +36,15 @@ namespace ExpenseTracker.Web.Host.Startup
             _appConfiguration = env.GetAppConfiguration();
         }
 
-        public void ConfigureServices(IServiceCollection services)
+        public void ConfigureServices(IServiceCollection services )
         {
             //MVC
             services.AddControllersWithViews(options =>
             {
                 options.Filters.Add(new AbpAutoValidateAntiforgeryTokenAttribute());
             });
+
+          
 
             IdentityRegistrar.Register(services);
             AuthConfigurer.Configure(services, _appConfiguration);
@@ -72,6 +75,17 @@ namespace ExpenseTracker.Web.Host.Startup
                     )
                 )
             );
+            services.AddTransient<RecurrenceSceduler>();
+
+            services.AddHangfire(
+                        config =>
+                        {
+                            config.UseSqlServerStorage(_appConfiguration.GetConnectionString("Default"));
+                        
+                        }
+                            
+                    );
+            services.AddHangfireServer();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env, ILoggerFactory loggerFactory)
@@ -88,7 +102,9 @@ namespace ExpenseTracker.Web.Host.Startup
             app.UseAuthorization();
 
             app.UseAbpRequestLocalization();
-
+            app.UseHangfireDashboard();
+            var serviceProvider = app.ApplicationServices;
+            GlobalConfiguration.Configuration.UseActivator(new Scedulers.Activator(serviceProvider));
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapHub<AbpCommonHub>("/signalr");
