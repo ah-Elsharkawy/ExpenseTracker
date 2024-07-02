@@ -213,6 +213,25 @@ namespace ExpenseTracker.Services
             return _objectMapper.Map<List<TransactionDTO>>(transaction);
             //var user = AbpSession.UserId;
         }
+        public TotalIncomesDTO GetTotalIncomeByMonth(int id)
+        {
+            DateTime endDate = DateTime.Now;
+            DateTime startDate = endDate - TimeSpan.FromDays(30);
+
+            double totalIncome = _transactionRepository
+                .GetAllList()
+                .Where(u => u.UserId == id && u.Date >= startDate && u.Date <= endDate)
+                .Where(t => t.Type == TransactionType.Income)
+                .Sum(t => t.Amount);
+
+            var totalIncomesDTO = new TotalIncomesDTO
+            {
+                TotalIncome = totalIncome
+            };
+
+            return totalIncomesDTO;
+        }
+
     }
 }
 
