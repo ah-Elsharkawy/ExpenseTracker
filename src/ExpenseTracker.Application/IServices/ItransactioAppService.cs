@@ -26,5 +26,6 @@ namespace ExpenseTracker.IServices
 
         TotalIncomesDTO GetTotalIncomeByMonth(int id);
         TotalExpensesDTO GetTotalExpenseByMonth(int id);
+        BalanceDTO GetBalance(int id);
     }
 }
