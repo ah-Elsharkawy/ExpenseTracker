@@ -23,15 +23,19 @@ namespace ExpenseTracker.Services
         private readonly IRepository<Transaction> _transactionRepository;
         private readonly IObjectMapper _objectMapper;
         private readonly UserManager _userManager;
+        private readonly IRepository<Category> _categoryRepository;
+
         public IAbpSession AbpSession { get; set; }
 
 
-        public TransactionAppService(IRepository<Transaction> transactionRepository, IObjectMapper objectMapper, UserManager userManager)
+        public TransactionAppService(IRepository<Transaction> transactionRepository, IObjectMapper objectMapper, UserManager userManager, IRepository<Category> categoryRepository)
         {
             _transactionRepository = transactionRepository;
             _objectMapper = objectMapper;
             AbpSession = NullAbpSession.Instance;
             _userManager = userManager;
+            _categoryRepository = categoryRepository;
+
         }
         [Authorize]
         public TransactionDTO CreateTransaction(TransactionDTO input ,int ?userid)
@@ -213,6 +217,32 @@ namespace ExpenseTracker.Services
             return _objectMapper.Map<List<TransactionDTO>>(transaction);
             //var user = AbpSession.UserId;
         }
+
+        public List<CategoryExpenseDto> GetCategoryExpenses(int _Month)
+        {
+            var uId = AbpSession.UserId;
+            if (uId == null)
+                return new List<CategoryExpenseDto>(); // or handle the null case appropriately
+
+            var month = _Month;
+            var categoryExpenses = _transactionRepository.GetAllList()
+                .Where(t => t.Date.Month == month && t.UserId == uId)
+                .Join(_categoryRepository.GetAllList().Where(c => c.Type == (TransactionType)1),
+                      t => t.CategoryId,
+                      c => c.Id,
+                      (t, c) => new { t.Amount, c.Name, t.CategoryId })
+                .GroupBy(tc => new { tc.CategoryId, tc.Name })
+                .Select(g => new CategoryExpenseDto
+                {
+                    TotalExpenses = g.Sum(tc => tc.Amount),
+                    CategoryName = g.Key.Name
+                })
+                .ToList();
+
+            return categoryExpenses;
+        }
+
+
     }
 }
 
