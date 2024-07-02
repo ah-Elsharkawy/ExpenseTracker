@@ -263,7 +263,6 @@ namespace ExpenseTracker.Services
             };
             return balance;
         }
-    }
 
         public List<CategoryExpenseDto> GetCategoryExpenses(int _Month)
         {
@@ -288,9 +287,12 @@ namespace ExpenseTracker.Services
 
             return categoryExpenses;
         }
-
-
     }
+
+        
+
+
+    
 }
 
 
