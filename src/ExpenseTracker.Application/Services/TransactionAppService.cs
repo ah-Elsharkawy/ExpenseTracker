@@ -220,7 +220,7 @@ namespace ExpenseTracker.Services
 
             double totalIncome = _transactionRepository
                 .GetAllList()
-                .Where(u => u.UserId == id && u.Date >= startDate && u.Date <= endDate)
+                .Where(u => u.UserId == id && u.Date <= endDate && u.Date >= startDate)
                 .Where(t => t.Type == TransactionType.Income)
                 .Sum(t => t.Amount);
 
@@ -228,10 +228,8 @@ namespace ExpenseTracker.Services
             {
                 TotalIncome = totalIncome
             };
-
             return totalIncomesDTO;
         }
-
     }
 }
 
