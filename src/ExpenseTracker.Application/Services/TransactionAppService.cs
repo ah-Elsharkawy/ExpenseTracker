@@ -38,7 +38,7 @@ namespace ExpenseTracker.Services
 
         }
         [Authorize]
-        public TransactionDTO CreateTransaction(TransactionDTO input ,int ?userid)
+        public TransactionDTO CreateTransaction(TransactionDTO input, int? userid)
         {
             try
             {
@@ -71,7 +71,7 @@ namespace ExpenseTracker.Services
         public List<TransactionDTO> GetTransactions()
         {
             var uId = AbpSession.UserId;
-            if(uId == null)
+            if (uId == null)
                 return null;
             var transactions = _transactionRepository.GetAllList().Where(t => t.UserId == uId).ToList();
             return _objectMapper.Map<List<TransactionDTO>>(transactions);
@@ -82,7 +82,7 @@ namespace ExpenseTracker.Services
             {
                 var uId = AbpSession.UserId;
                 var transaction = _transactionRepository.Get(id);
-                if(transaction.UserId == uId)
+                if (transaction.UserId == uId)
                     return _objectMapper.Map<TransactionDTO>(transaction);
                 else
                     return null;
@@ -98,7 +98,7 @@ namespace ExpenseTracker.Services
             var uId = AbpSession.UserId;
             if (uId == null || userId == null)
                 return null;
-            
+
             var transaction = _transactionRepository.GetAllList().Where(t => t.Type == type && t.UserId == userId).ToList();
             return _objectMapper.Map<List<TransactionDTO>>(transaction);
         }
@@ -122,23 +122,23 @@ namespace ExpenseTracker.Services
                 Transaction t = null;
                 var uId = AbpSession.UserId;
                 var user = _userManager.GetUserById((int)uId);
-                if(transaction != null)
+                if (transaction != null)
                 {
-                     t = _transactionRepository.Get(transaction.Id);
-                   
+                    t = _transactionRepository.Get(transaction.Id);
+
                     t.CategoryId = transaction.CategoryId;
-                    if(t.Amount != transaction.Amount)
+                    if (t.Amount != transaction.Amount)
                     {
                         user.Balance -= t.Amount;
                         if (transaction.Type == TransactionType.Income)
                             user.Balance += transaction.Amount;
                         else
                         {
-                            if(user.Balance - transaction.Amount < 0)
+                            if (user.Balance - transaction.Amount < 0)
                                 throw new Exception("Not enough balance");
                             user.Balance -= transaction.Amount;
                         }
-                            
+
                     }
                     t.Amount = transaction.Amount;
                     t.Type = transaction.Type;
@@ -146,7 +146,7 @@ namespace ExpenseTracker.Services
                     t.Description = transaction.Description;
                 }
 
-                
+
 
                 if (uId == null || t?.UserId != uId) return null;
                 var updatedTransaction = _transactionRepository.Update(t);
@@ -217,6 +217,53 @@ namespace ExpenseTracker.Services
             return _objectMapper.Map<List<TransactionDTO>>(transaction);
             //var user = AbpSession.UserId;
         }
+        public TotalIncomesDTO GetTotalIncomeByMonth(int id)
+        {
+            DateTime endDate = DateTime.Now;
+            DateTime startDate = endDate - TimeSpan.FromDays(30);
+
+            double totalIncome = _transactionRepository
+                .GetAllList()
+                .Where(u => u.UserId == id && u.Date <= endDate && u.Date >= startDate)
+                .Where(t => t.Type == TransactionType.Income)
+                .Sum(t => t.Amount);
+
+            var totalIncomesDTO = new TotalIncomesDTO
+            {
+                TotalIncome = totalIncome
+            };
+            return totalIncomesDTO;
+        }
+
+        public TotalExpensesDTO GetTotalExpenseByMonth(int id)
+        {
+            DateTime endDate = DateTime.Now;
+            DateTime startDate = endDate - TimeSpan.FromDays(30);
+
+            double totalExpense = _transactionRepository
+                .GetAllList()
+                .Where(u => u.UserId == id && u.Date <= endDate && u.Date >= startDate)
+                .Where(t => t.Type == TransactionType.Expense)
+                .Sum(t => t.Amount);
+
+            var totalExpensesDTO = new TotalExpensesDTO
+            {
+                TotalExpense = totalExpense
+            };
+
+            return totalExpensesDTO;
+        }
+
+        public BalanceDTO GetBalance(int id)
+        {
+            var user = _userManager.GetUserById(id);
+            var balance = new BalanceDTO
+            {
+                Balance = user.Balance
+            };
+            return balance;
+        }
+    }
 
         public List<CategoryExpenseDto> GetCategoryExpenses(int _Month)
         {
@@ -245,4 +292,5 @@ namespace ExpenseTracker.Services
 
     }
 }
+
 
