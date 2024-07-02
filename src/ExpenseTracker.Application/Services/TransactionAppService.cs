@@ -230,6 +230,25 @@ namespace ExpenseTracker.Services
             };
             return totalIncomesDTO;
         }
+
+        public TotalExpensesDTO GetTotalExpenseByMonth(int id)
+        {
+            DateTime endDate = DateTime.Now;
+            DateTime startDate = endDate - TimeSpan.FromDays(30);
+
+            double totalExpense = _transactionRepository
+                .GetAllList()
+                .Where(u => u.UserId == id && u.Date <= endDate && u.Date >= startDate)
+                .Where(t => t.Type == TransactionType.Expense)
+                .Sum(t => t.Amount);
+
+            var totalExpensesDTO = new TotalExpensesDTO
+            {
+                TotalExpense = totalExpense
+            };
+
+            return totalExpensesDTO;
+        }
     }
 }
 
