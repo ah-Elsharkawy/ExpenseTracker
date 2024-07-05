@@ -28,7 +28,7 @@ namespace ExpenseTracker.Services
             _objectMapper = objectMapper;
         }
 
-        public async Task<List<NotificationDTO>> GetNotifications()
+        public List<NotificationDTO> GetNotifications()
         {
             try
             {
@@ -36,7 +36,7 @@ namespace ExpenseTracker.Services
                 if (uId == null)
                     return null;
 
-                var notifications = await _repository.GetAllListAsync();
+                var notifications = _repository.GetAllList().Where(x => x.UserId == uId);
                 return new List<NotificationDTO>(ObjectMapper.Map<List<NotificationDTO>>(notifications));
             }
             catch(Exception ex)
