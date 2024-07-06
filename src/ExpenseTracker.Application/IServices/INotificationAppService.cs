@@ -12,5 +12,6 @@ namespace ExpenseTracker.IServices
     {
         List<NotificationDTO> GetNotifications();
         Task updateNotification(int notificationId);
+        NewNotificationDTO CreateNotification(NewNotificationDTO input);
     }
 }

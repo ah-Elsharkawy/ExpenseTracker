@@ -24,18 +24,19 @@ namespace ExpenseTracker.Services
         private readonly IObjectMapper _objectMapper;
         private readonly UserManager _userManager;
         private readonly IRepository<Category> _categoryRepository;
+        private readonly INotificationAppService _notificationAppService;
 
         public IAbpSession AbpSession { get; set; }
 
 
-        public TransactionAppService(IRepository<Transaction> transactionRepository, IObjectMapper objectMapper, UserManager userManager, IRepository<Category> categoryRepository)
+        public TransactionAppService(IRepository<Transaction> transactionRepository, IObjectMapper objectMapper, UserManager userManager, IRepository<Category> categoryRepository, INotificationAppService notificationAppService)
         {
             _transactionRepository = transactionRepository;
             _objectMapper = objectMapper;
             AbpSession = NullAbpSession.Instance;
             _userManager = userManager;
             _categoryRepository = categoryRepository;
-
+            _notificationAppService = notificationAppService;
         }
         [Authorize]
         public TransactionDTO CreateTransaction(TransactionDTO input, int? userid)
@@ -51,12 +52,28 @@ namespace ExpenseTracker.Services
                 var user = _userManager.GetUserById((int)uId);
 
                 if (transaction.Type == TransactionType.Income)
+                {
                     user.Balance += transaction.Amount;
+
+                    _notificationAppService.CreateNotification(new NewNotificationDTO
+                    {
+                        Message = $"A new income that worth {transaction.Amount} has been added to your balance",
+                        Type = NotificationType.reminder,
+                        UserId = (int)uId
+                    });
+                }
                 else
                 {
                     if ((user.Balance - transaction.Amount) < 0)
                         throw new Exception("Not enough balance");
                     user.Balance -= transaction.Amount;
+
+                    _notificationAppService.CreateNotification(new NewNotificationDTO
+                    {
+                        Message = $"A new expense that worth {transaction.Amount} has been removed from your balance",
+                        Type = NotificationType.reminder,
+                        UserId = (int)uId
+                    });
                 }
 
 

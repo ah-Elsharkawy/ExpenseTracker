@@ -28,6 +28,19 @@ namespace ExpenseTracker.Services
             _objectMapper = objectMapper;
         }
 
+        public NewNotificationDTO CreateNotification(NewNotificationDTO input)
+        {
+            try
+            {
+                var notification = _repository.Insert(new Notifications { Message = input.Message, Type = input.Type, UserId=input.UserId });
+                return _objectMapper.Map<NewNotificationDTO>(notification);
+            }
+            catch (Exception ex)
+            {
+                throw new Exception(ex.Message);
+            }
+        }
+
         public List<NotificationDTO> GetNotifications()
         {
             try
