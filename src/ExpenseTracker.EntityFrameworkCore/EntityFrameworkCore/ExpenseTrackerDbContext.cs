@@ -19,8 +19,8 @@ namespace ExpenseTracker.EntityFrameworkCore
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<UserCategory>()
-            .HasKey(uc => new { uc.UserId, uc.CategoryId });
+            //modelBuilder.Entity<UserCategory>()
+            //.HasKey(uc => new { uc.UserId, uc.CategoryId });
         }
         public ExpenseTrackerDbContext(DbContextOptions<ExpenseTrackerDbContext> options)
             : base(options)

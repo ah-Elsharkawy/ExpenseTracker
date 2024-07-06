@@ -7,6 +7,8 @@ using ExpenseTracker.Dto;
 using ExpenseTracker.Enums;
 using ExpenseTracker.IServices;
 using ExpenseTracker.Models;
+using ExpenseTracker.Scedulers;
+using Hangfire;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -23,15 +25,19 @@ namespace ExpenseTracker.Services
         private readonly IRepository<Transaction> _transactionRepository;
         private readonly IObjectMapper _objectMapper;
         private readonly UserManager _userManager;
+        private readonly IRepository<UserCategory> UserCategory;
         public IAbpSession AbpSession { get; set; }
 
 
-        public TransactionAppService(IRepository<Transaction> transactionRepository, IObjectMapper objectMapper, UserManager userManager)
+        public TransactionAppService(IRepository<Transaction> transactionRepository, IObjectMapper objectMapper, UserManager userManager, IRepository<UserCategory> userCategory)
         {
             _transactionRepository = transactionRepository;
             _objectMapper = objectMapper;
             AbpSession = NullAbpSession.Instance;
             _userManager = userManager;
+            UserCategory = userCategory;
+            RecurringJob.AddOrUpdate<ResetBudgetSceduler>("weekly", (x) => x.ResetAllWeeklyBudgets(), "@weekly");
+            RecurringJob.AddOrUpdate<ResetBudgetSceduler>("monthly", (x) => x.ResetAllMonthlyBudgets(), "@monthly");
         }
         [Authorize]
         public TransactionDTO CreateTransaction(TransactionDTO input ,int ?userid)
@@ -42,7 +48,7 @@ namespace ExpenseTracker.Services
                 var uId = AbpSession.UserId ?? userid;
                 if (uId == null)
                     return new TransactionDTO();
-
+                var userCategory = UserCategory.FirstOrDefault(x => x.CategoryId == input.CategoryId && x.UserId == uId);
                 var transaction = _transactionRepository.Insert(new Transaction { UserId = (int)uId, Amount = input.Amount, CategoryId = input.CategoryId, Type = input.Type, Date = input.Date, Description = input.Description });
                 var user = _userManager.GetUserById((int)uId);
 
@@ -53,6 +59,17 @@ namespace ExpenseTracker.Services
                     if ((user.Balance - transaction.Amount) < 0)
                         throw new Exception("Not enough balance");
                     user.Balance -= transaction.Amount;
+                    if(userCategory != null)
+                    {
+                        userCategory.AmountSpent += transaction.Amount;
+                        
+                        UserCategory.Update(userCategory);
+
+                        if (userCategory.LimitAmount < userCategory.AmountSpent)
+                        {
+                            throw new Exception("budget exceeded");
+                        }
+                    }
                 }
 
 
@@ -118,7 +135,8 @@ namespace ExpenseTracker.Services
                 Transaction t = null;
                 var uId = AbpSession.UserId;
                 var user = _userManager.GetUserById((int)uId);
-                if(transaction != null)
+                var userCategory = UserCategory.FirstOrDefault(x => x.CategoryId == transaction.CategoryId && x.UserId == user.Id);
+                if (transaction != null)
                 {
                      t = _transactionRepository.Get(transaction.Id);
                    
@@ -140,6 +158,12 @@ namespace ExpenseTracker.Services
                     t.Type = transaction.Type;
                     t.Date = DateTime.Now;
                     t.Description = transaction.Description;
+                    if(userCategory != null)
+                    {
+                        userCategory.AmountSpent += t.Amount;
+                        userCategory.AmountSpent -= transaction.Amount;
+                        UserCategory.Update(userCategory);
+                    }
                 }
 
                 
@@ -162,11 +186,18 @@ namespace ExpenseTracker.Services
                 t = _transactionRepository.Get(id);
                 var uId = AbpSession.UserId;
                 var user = _userManager.GetUserById((int)uId);
+                var userCategory = UserCategory.FirstOrDefault(x => x.CategoryId == t.CategoryId && x.UserId == user.Id);
+
                 if (t != null && user != null)
                 {
                     if ((user.Balance - t.Amount) < 0)
                         throw new Exception("Not enough balance");
                     user.Balance -= t.Amount;
+                }
+                if(userCategory != null)
+                {
+                    userCategory.AmountSpent -= t.Amount;
+                    UserCategory.Update(userCategory);
                 }
 
                 _transactionRepository.Delete(id);

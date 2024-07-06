@@ -8,6 +8,6 @@ namespace ExpenseTracker.Enums
 {
     public enum LimitType
     {
-        daily,weekly,monthly,yearly
+        weekly,monthly,yearly
     }
 }
