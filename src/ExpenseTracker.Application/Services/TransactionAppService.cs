@@ -55,9 +55,11 @@ namespace ExpenseTracker.Services
                 {
                     user.Balance += transaction.Amount;
 
+                    var categoryName = _categoryRepository.Get(transaction.CategoryId).Name;
+
                     _notificationAppService.CreateNotification(new NewNotificationDTO
                     {
-                        Message = $"A new income that worth {transaction.Amount} has been added to your balance",
+                        Message = $"A new income which is {categoryName} that worth ${transaction.Amount} has been added to your balance",
                         Type = NotificationType.reminder,
                         UserId = (int)uId
                     });
@@ -68,9 +70,11 @@ namespace ExpenseTracker.Services
                         throw new Exception("Not enough balance");
                     user.Balance -= transaction.Amount;
 
+                    var categoryName = _categoryRepository.Get(transaction.CategoryId).Name;
+
                     _notificationAppService.CreateNotification(new NewNotificationDTO
                     {
-                        Message = $"A new expense that worth {transaction.Amount} has been removed from your balance",
+                        Message = $"A new expense which is {categoryName} that worth ${transaction.Amount} has been removed from your balance",
                         Type = NotificationType.reminder,
                         UserId = (int)uId
                     });
