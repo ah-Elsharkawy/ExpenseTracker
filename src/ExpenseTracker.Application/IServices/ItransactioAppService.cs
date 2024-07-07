@@ -23,5 +23,9 @@ namespace ExpenseTracker.IServices
 
         List<TransactionDTO> GetTransactionsOneWeekAgo(int id, TransactionType? type);
         List<TransactionDTO> GetTransactionByDate(int id, DateTime startDate, DateTime endDate, TransactionType? type);
+
+        TotalIncomesDTO GetTotalIncomeByMonth(int id);
+        TotalExpensesDTO GetTotalExpenseByMonth(int id);
+        BalanceDTO GetBalance(int id);
     }
 }
