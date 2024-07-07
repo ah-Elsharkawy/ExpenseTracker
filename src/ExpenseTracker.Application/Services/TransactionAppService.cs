@@ -185,18 +185,19 @@ namespace ExpenseTracker.Services
                                 throw new Exception("Not enough balance");
                             user.Balance -= transaction.Amount;
                         }
+                        if (userCat != null )
+                        {
+                            userCat.AmountSpent -= t.Amount;
+                            userCat.AmountSpent += transaction.Amount;
+                            userCategory.Update(userCat);
+                        }
 
                     }
                     t.Amount = transaction.Amount;
                     t.Type = transaction.Type;
                     t.Date = DateTime.Now;
                     t.Description = transaction.Description;
-                    if(userCategory != null)
-                    {
-                        userCat.AmountSpent += t.Amount;
-                        userCat.AmountSpent -= transaction.Amount;
-                        userCategory.Update(userCat);
-                    }
+                 
                 }
 
 
@@ -227,9 +228,16 @@ namespace ExpenseTracker.Services
                         throw new Exception("Not enough balance");
                     user.Balance -= t.Amount;
                 }
-                if(userCategory != null)
+                if(userCat != null)
                 {
-                    userCat.AmountSpent -= t.Amount;
+                    if(userCat.AmountSpent < t.Amount)
+                    {
+                        userCat.AmountSpent = 0;
+                    }
+                    else
+                    {
+                        userCat.AmountSpent -= t.Amount;
+                    }
                     userCategory.Update(userCat);
                 }
 

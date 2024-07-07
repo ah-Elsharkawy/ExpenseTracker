@@ -45,10 +45,10 @@ namespace ExpenseTracker.Scedulers
                    
                },(int)recurrence.UserId);
 
-                recurrence.Duration = recurrence.Duration - 1;
+                recurrence.Duration -= 1;
                 RecurrenceRepo.Update(recurrence);
-               
-               if(recurrence.Duration == 0)
+
+                if (recurrence.Duration == 0)
                 {
                     RecurringJob.RemoveIfExists(recurrence.Id.ToString());
                     RecurrenceRepo.Delete(recurrence);
