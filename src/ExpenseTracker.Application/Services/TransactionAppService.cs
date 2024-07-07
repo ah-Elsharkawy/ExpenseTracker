@@ -25,20 +25,20 @@ namespace ExpenseTracker.Services
         private readonly IRepository<Transaction> _transactionRepository;
         private readonly IObjectMapper _objectMapper;
         private readonly UserManager _userManager;
-
+        private readonly IRepository<UserCategory> userCategory;
         private readonly IRepository<Category> _categoryRepository;
         private readonly INotificationAppService _notificationAppService;
 
         public IAbpSession AbpSession { get; set; }
 
 
-        public TransactionAppService(IRepository<Transaction> transactionRepository, IObjectMapper objectMapper, UserManager userManager, IRepository<Category> categoryRepository, INotificationAppService notificationAppService)
+        public TransactionAppService(IRepository<Transaction> transactionRepository, IObjectMapper objectMapper, UserManager userManager, IRepository<Category> categoryRepository, INotificationAppService notificationAppService, IRepository<UserCategory> UserCategory)
         {
             _transactionRepository = transactionRepository;
             _objectMapper = objectMapper;
             AbpSession = NullAbpSession.Instance;
             _userManager = userManager;
-            UserCategory = userCategory;
+            userCategory = UserCategory;
             RecurringJob.AddOrUpdate<ResetBudgetSceduler>("weekly", (x) => x.ResetAllWeeklyBudgets(), "@weekly");
             RecurringJob.AddOrUpdate<ResetBudgetSceduler>("monthly", (x) => x.ResetAllMonthlyBudgets(), "@monthly");
             _categoryRepository = categoryRepository;
@@ -54,7 +54,7 @@ namespace ExpenseTracker.Services
                 var uId = AbpSession.UserId ?? userid;
                 if (uId == null)
                     return new TransactionDTO();
-                var userCategory = UserCategory.FirstOrDefault(x => x.CategoryId == input.CategoryId && x.UserId == uId);
+                var userCat = userCategory.GetAllIncluding(c=>c.Category).FirstOrDefault(x => x.CategoryId == input.CategoryId && x.UserId == uId);
                 var transaction = _transactionRepository.Insert(new Transaction { UserId = (int)uId, Amount = input.Amount, CategoryId = input.CategoryId, Type = input.Type, Date = input.Date, Description = input.Description });
                 var user = _userManager.GetUserById((int)uId);
 
@@ -76,15 +76,20 @@ namespace ExpenseTracker.Services
                     if ((user.Balance - transaction.Amount) < 0)
                         throw new Exception("Not enough balance");
                     user.Balance -= transaction.Amount;
-                    if(userCategory != null)
+                    if(userCat != null)
                     {
-                        userCategory.AmountSpent += transaction.Amount;
-                        
-                        UserCategory.Update(userCategory);
+                        userCat.AmountSpent += transaction.Amount;
 
-                        if (userCategory.LimitAmount < userCategory.AmountSpent)
+                        userCategory.Update(userCat);
+
+                        if (userCat.LimitAmount < userCat.AmountSpent)
                         {
-                            throw new Exception("budget exceeded");
+                            _notificationAppService.CreateNotification(new NewNotificationDTO
+                            {
+                                Message = $"this category's {userCat.Category.Name} budget limit exceeded",
+                                Type = NotificationType.reminder,
+                                UserId = (int)uId
+                            });
                         }
                     }
 
@@ -162,7 +167,7 @@ namespace ExpenseTracker.Services
                 Transaction t = null;
                 var uId = AbpSession.UserId;
                 var user = _userManager.GetUserById((int)uId);
-                var userCategory = UserCategory.FirstOrDefault(x => x.CategoryId == transaction.CategoryId && x.UserId == user.Id);
+                var userCat = userCategory.FirstOrDefault(x => x.CategoryId == transaction.CategoryId && x.UserId == user.Id);
 
                 if (transaction != null)
                 {
@@ -188,9 +193,9 @@ namespace ExpenseTracker.Services
                     t.Description = transaction.Description;
                     if(userCategory != null)
                     {
-                        userCategory.AmountSpent += t.Amount;
-                        userCategory.AmountSpent -= transaction.Amount;
-                        UserCategory.Update(userCategory);
+                        userCat.AmountSpent += t.Amount;
+                        userCat.AmountSpent -= transaction.Amount;
+                        userCategory.Update(userCat);
                     }
                 }
 
@@ -214,7 +219,7 @@ namespace ExpenseTracker.Services
                 t = _transactionRepository.Get(id);
                 var uId = AbpSession.UserId;
                 var user = _userManager.GetUserById((int)uId);
-                var userCategory = UserCategory.FirstOrDefault(x => x.CategoryId == t.CategoryId && x.UserId == user.Id);
+                var userCat = userCategory.FirstOrDefault(x => x.CategoryId == t.CategoryId && x.UserId == user.Id);
 
                 if (t != null && user != null)
                 {
@@ -224,8 +229,8 @@ namespace ExpenseTracker.Services
                 }
                 if(userCategory != null)
                 {
-                    userCategory.AmountSpent -= t.Amount;
-                    UserCategory.Update(userCategory);
+                    userCat.AmountSpent -= t.Amount;
+                    userCategory.Update(userCat);
                 }
 
                 _transactionRepository.Delete(id);
